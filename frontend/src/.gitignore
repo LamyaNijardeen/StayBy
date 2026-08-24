@@ -1,0 +1,29 @@
+# Dependencies
+frontend/node_modules/
+
+# Build output
+frontend/dist/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Spring Boot
+backend/target/
+
+# Spring Boot environment files
+backend/.env
+backend/.env.*
+
+# IDE files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
