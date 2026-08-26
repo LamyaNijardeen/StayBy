@@ -30,7 +30,9 @@ const steps = [
 
 function HowItWorks() {
   return (
-    <section className="bg-[var(--color-background)]">
+    <section 
+    id="how-it-works"
+    className="bg-[var(--color-background)]">
       <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24">
 
         {/* Heading */}

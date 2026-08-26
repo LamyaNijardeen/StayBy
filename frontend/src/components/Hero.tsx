@@ -5,6 +5,8 @@ import {
   Search,
   Users,
 } from "lucide-react";
+import { Link } from "react-router-dom";
+
 function Hero() {
   return (
     <section className="relative overflow-hidden">
@@ -120,13 +122,13 @@ function Hero() {
           </p>
         </div>
 
-        <button
-          type="button"
-          className="rounded-full bg-[var(--color-coral)] p-3 text-white transition hover:bg-[var(--color-navy-dark)]"
-          aria-label="Search stays"
-        >
-          <Search size={18} strokeWidth={2} />
-        </button>
+<Link
+  to="/search"
+  className="rounded-full bg-[var(--color-coral)] p-3 text-white transition hover:bg-[var(--color-navy-dark)]"
+  aria-label="Search stays"
+>
+  <Search size={18} strokeWidth={2} />
+</Link>
       </div>
 
     </div>

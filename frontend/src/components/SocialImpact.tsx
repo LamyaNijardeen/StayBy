@@ -7,7 +7,9 @@ import {
 
 function SocialImpact() {
   return (
-    <section className="bg-[var(--color-navy)]">
+    <section 
+    id="impact"
+    className="bg-[var(--color-navy)]">
       <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24">
 
         <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
