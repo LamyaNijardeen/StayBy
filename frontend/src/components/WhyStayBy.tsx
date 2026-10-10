@@ -1,33 +1,43 @@
 import {
-  CheckCircle,
   Compass,
+  MapPin,
   ShieldCheck,
+  Target,
 } from "lucide-react";
 
 const benefits = [
   {
-    icon: Compass,
-    title: "Find the right place",
+    icon: Target,
+    title: "Search by purpose",
     description:
-      "Search stays based on where you're going, when you're staying, and what you need.",
+      "Find accommodation based on why you're travelling, whether it's for education, work, healthcare, travel, or other needs.",
+  },
+  {
+    icon: MapPin,
+    title: "Find the right location",
+    description:
+      "Discover stays near the places that matter to your journey, with property locations available on the map.",
   },
   {
     icon: ShieldCheck,
-    title: "Stay with confidence",
+    title: "Book with confidence",
     description:
-      "Discover properties with clear information so you can make your decision with confidence.",
+      "View clear property and room information, availability, booking details, and updates throughout your stay.",
   },
   {
-    icon: CheckCircle,
-    title: "Simple and transparent",
+    icon: Compass,
+    title: "Keep it simple",
     description:
-      "Keep the booking experience straightforward, with the important details easy to understand.",
+      "From searching to booking and managing your stay, StayBy keeps the experience straightforward and easy to follow.",
   },
 ];
 
 function WhyStayBy() {
   return (
-    <section className="bg-[var(--color-surface)]">
+    <section
+  id="why-stayby"
+  className="bg-[var(--color-surface)] scroll-mt-24"
+>
       <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24">
 
         {/* Heading */}
@@ -37,17 +47,17 @@ function WhyStayBy() {
           </p>
 
           <h2 className="text-3xl font-bold tracking-tight text-[var(--color-navy)] sm:text-4xl">
-            Finding a place should feel simple.
+            More than finding a place to stay.
           </h2>
 
           <p className="mt-4 text-[var(--color-text-secondary)]">
-            Everything you need to find a stay that fits your plans,
-            without making the process complicated.
+            StayBy brings purpose, location, and a simple booking experience
+            together to help you find accommodation that fits your journey.
           </p>
         </div>
 
         {/* Benefits */}
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
+        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {benefits.map((benefit) => {
             const Icon = benefit.icon;
 

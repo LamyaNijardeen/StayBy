@@ -1,4 +1,9 @@
-import { ArrowRight, Menu, X } from "lucide-react";
+import {
+  Building2,
+  LogIn,
+  Menu,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
@@ -10,129 +15,193 @@ function Navbar() {
   };
 
   return (
-    <header className="w-full border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-      <nav className="mx-auto max-w-7xl px-6 py-5 lg:px-8">
+    <header className="sticky top-0 z-50 w-full border-b border-[var(--color-border)] bg-[var(--color-surface)]">
+      <nav className="mx-auto max-w-7xl px-6 lg:px-8">
 
-        {/* Top row */}
-        <div className="flex items-center justify-between">
+        <div className="flex h-20 items-center justify-between">
 
-          {/* Logo */}
+          {/* =====================================================
+              LOGO
+          ===================================================== */}
+
           <Link
             to="/"
             onClick={closeMenu}
-            className="text-2xl font-bold tracking-tight text-[var(--color-navy)]"
+            className="group flex items-center gap-2"
           >
-            StayBy
+            <Building2
+              size={23}
+              strokeWidth={2}
+              className="text-[var(--color-coral)] transition-transform duration-200 group-hover:scale-105"
+            />
+
+            <span className="text-2xl font-bold tracking-tight text-[var(--color-navy)]">
+              Stay
+              <span className="text-[var(--color-coral)]">
+                By
+              </span>
+            </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden items-center gap-8 md:flex">
+          {/* =====================================================
+              DESKTOP NAVIGATION
+          ===================================================== */}
+
+          <div className="hidden items-center gap-1 lg:flex">
 
             <a
               href="#explore"
-              className="text-sm font-medium text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)]"
+              className="group relative rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
             >
               Explore
+
+              <span className="absolute bottom-1 left-4 right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
+            </a>
+
+            <a
+              href="#featured"
+              className="group relative rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
+            >
+              Featured
+
+              <span className="absolute bottom-1 left-4 right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
+            </a>
+
+            <a
+              href="#why-stayby"
+              className="group relative rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
+            >
+              Why StayBy?
+
+              <span className="absolute bottom-1 left-4 right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
             </a>
 
             <a
               href="#how-it-works"
-              className="text-sm font-medium text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)]"
+              className="group relative rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
             >
-              How it works
+              How It Works
+
+              <span className="absolute bottom-1 left-4 right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
             </a>
 
             <a
               href="#impact"
-              className="text-sm font-medium text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)]"
+              className="group relative rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
             >
-              Our impact
+              Our Purpose
+
+              <span className="absolute bottom-1 left-4 right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
             </a>
 
           </div>
 
-          {/* Desktop Actions */}
-          <div className="hidden items-center gap-3 sm:flex">
+          {/* =====================================================
+              DESKTOP ACTIONS
+          ===================================================== */}
 
+          <div className="hidden items-center gap-3 lg:flex">
             <Link
               to="/login"
-              className="text-sm font-medium text-[var(--color-navy)]"
+              className="flex items-center gap-2 rounded-xl border-2 border-[var(--color-coral)] px-4 py-2.5 text-sm font-semibold text-[var(--color-coral)] transition-all duration-200 hover:bg-[var(--color-navy)] hover:border-[var(--color-navy)] hover:text-white"
             >
-              Sign in
+              <LogIn size={16} />
+              Login
             </Link>
-
             <Link
               to="/register"
-              className="flex items-center gap-2 rounded-full bg-[var(--color-coral)] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--color-navy-dark)]"
+              className="rounded-xl bg-[var(--color-coral)] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all duration-200 hover:bg-[var(--color-navy)]"
             >
-              Get started
-              <ArrowRight size={16} strokeWidth={2} />
+              Sign up
             </Link>
 
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* =====================================================
+              MOBILE BUTTON
+          ===================================================== */}
+
           <button
             type="button"
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="rounded-lg p-2 text-[var(--color-navy)] transition hover:bg-[var(--color-background)] md:hidden"
+            onClick={() => setIsMenuOpen((current) => !current)}
+            className="rounded-lg p-2 text-[var(--color-navy)] transition-all duration-200 hover:bg-[var(--color-background)] lg:hidden"
             aria-label={isMenuOpen ? "Close menu" : "Open menu"}
             aria-expanded={isMenuOpen}
           >
             {isMenuOpen ? (
-              <X size={24} strokeWidth={2} />
+              <X size={24} />
             ) : (
-              <Menu size={24} strokeWidth={2} />
+              <Menu size={24} />
             )}
           </button>
 
         </div>
 
-        {/* Mobile Menu */}
+        {/* =====================================================
+            MOBILE MENU
+        ===================================================== */}
+
         {isMenuOpen && (
-          <div className="mt-5 border-t border-[var(--color-border)] pt-5 md:hidden">
+          <div className="border-t border-[var(--color-border)] py-4 lg:hidden">
 
             <div className="flex flex-col gap-1">
 
               <a
                 href="#explore"
                 onClick={closeMenu}
-                className="rounded-lg px-3 py-3 text-sm font-medium text-[var(--color-text-secondary)] transition hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
+                className="rounded-lg px-4 py-3 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
               >
                 Explore
               </a>
 
               <a
+                href="#featured"
+                onClick={closeMenu}
+                className="rounded-lg px-4 py-3 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
+              >
+                Featured
+              </a>
+
+              <a
+                href="#why-stayby"
+                onClick={closeMenu}
+                className="rounded-lg px-4 py-3 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
+              >
+                Why StayBy?
+              </a>
+
+              <a
                 href="#how-it-works"
                 onClick={closeMenu}
-                className="rounded-lg px-3 py-3 text-sm font-medium text-[var(--color-text-secondary)] transition hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
+                className="rounded-lg px-4 py-3 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
               >
-                How it works
+                How It Works
               </a>
 
               <a
                 href="#impact"
                 onClick={closeMenu}
-                className="rounded-lg px-3 py-3 text-sm font-medium text-[var(--color-text-secondary)] transition hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
+                className="rounded-lg px-4 py-3 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
               >
-                Our impact
+                Our Purpose
               </a>
+
+              <div className="my-2 border-t border-[var(--color-border)]" />
 
               <Link
                 to="/login"
                 onClick={closeMenu}
-                className="rounded-lg px-3 py-3 text-sm font-medium text-[var(--color-navy)] transition hover:bg-[var(--color-background)]"
+                className="flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-semibold text-[var(--color-coral)] transition-all duration-200 hover:bg-[var(--color-navy)] hover:text-white"
               >
-                Sign in
+                <LogIn size={17} />
+                Login
               </Link>
-
               <Link
                 to="/register"
                 onClick={closeMenu}
-                className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-[var(--color-coral)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-navy-dark)]"
+                className="mt-1 rounded-lg bg-[var(--color-coral)] px-4 py-3 text-center text-sm font-semibold text-white transition-all duration-200 hover:bg-[var(--color-navy)]"
               >
-                Get started
-                <ArrowRight size={16} strokeWidth={2} />
+                Sign up
               </Link>
 
             </div>

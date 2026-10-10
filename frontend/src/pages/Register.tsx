@@ -1,9 +1,117 @@
 import { ArrowLeft, Eye, EyeOff, MapPin } from "lucide-react";
 import { useState } from "react";
+import type { FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Register() {
+  const navigate = useNavigate();
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleRegister = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    setError("");
+
+    const trimmedName = name.trim();
+    const trimmedEmail = email.trim();
+
+    if (!trimmedName) {
+      setError("Please enter your full name.");
+      return;
+    }
+
+    if (!trimmedEmail) {
+      setError("Please enter your email address.");
+      return;
+    }
+
+    if (!password) {
+      setError("Please enter a password.");
+      return;
+    }
+
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters long.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(
+        "http://localhost:8080/api/auth/register",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: trimmedName,
+            email: trimmedEmail,
+            password,
+          }),
+        }
+      );
+
+      const responseText = await response.text();
+
+      let data: {
+        message?: string;
+        email?: string;
+        id?: number;
+        name?: string;
+        role?: string;
+        token?: string | null;
+      } = {};
+
+      try {
+        if (responseText) {
+          data = JSON.parse(responseText);
+        }
+      } catch {
+        // Response was not JSON
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          data.message ||
+            responseText ||
+            "Registration failed. Please try again."
+        );
+      }
+
+      // Registration succeeded.
+      // Go to email verification page and pass the email.
+      navigate("/verify-email", {
+        state: {
+          email: data.email || trimmedEmail,
+        },
+      });
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Registration failed. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[var(--color-background)]">
@@ -14,6 +122,7 @@ function Register() {
 
           <button
             type="button"
+            onClick={() => navigate("/")}
             className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)]"
           >
             <ArrowLeft size={17} />
@@ -59,7 +168,14 @@ function Register() {
           {/* Form card */}
           <div className="mt-8 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-lg shadow-black/5 sm:p-8">
 
-            <form className="space-y-5">
+            <form onSubmit={handleRegister} className="space-y-5">
+
+              {/* Error */}
+              {error && (
+                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm leading-5 text-red-600">
+                  {error}
+                </div>
+              )}
 
               {/* Name */}
               <div>
@@ -73,8 +189,12 @@ function Register() {
                 <input
                   id="name"
                   type="text"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
                   placeholder="Your full name"
-                  className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 text-sm text-[var(--color-text)] outline-none transition placeholder:text-gray-400 focus:border-[var(--color-coral)] focus:ring-2 focus:ring-[var(--color-coral-light)]"
+                  disabled={loading}
+                  autoComplete="name"
+                  className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 text-sm text-[var(--color-text)] outline-none transition placeholder:text-gray-400 focus:border-[var(--color-coral)] focus:ring-2 focus:ring-[var(--color-coral-light)] disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
 
@@ -90,8 +210,12 @@ function Register() {
                 <input
                   id="register-email"
                   type="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
                   placeholder="you@example.com"
-                  className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 text-sm text-[var(--color-text)] outline-none transition placeholder:text-gray-400 focus:border-[var(--color-coral)] focus:ring-2 focus:ring-[var(--color-coral-light)]"
+                  disabled={loading}
+                  autoComplete="email"
+                  className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 text-sm text-[var(--color-text)] outline-none transition placeholder:text-gray-400 focus:border-[var(--color-coral)] focus:ring-2 focus:ring-[var(--color-coral-light)] disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
 
@@ -108,8 +232,12 @@ function Register() {
                   <input
                     id="register-password"
                     type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
                     placeholder="Create a password"
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 pr-12 text-sm text-[var(--color-text)] outline-none transition placeholder:text-gray-400 focus:border-[var(--color-coral)] focus:ring-2 focus:ring-[var(--color-coral-light)]"
+                    disabled={loading}
+                    autoComplete="new-password"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 pr-12 text-sm text-[var(--color-text)] outline-none transition placeholder:text-gray-400 focus:border-[var(--color-coral)] focus:ring-2 focus:ring-[var(--color-coral-light)] disabled:cursor-not-allowed disabled:opacity-60"
                   />
 
                   <button
@@ -118,7 +246,8 @@ function Register() {
                       showPassword ? "Hide password" : "Show password"
                     }
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)]"
+                    disabled={loading}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)] disabled:opacity-50"
                   >
                     {showPassword ? (
                       <EyeOff size={18} />
@@ -127,6 +256,10 @@ function Register() {
                     )}
                   </button>
                 </div>
+
+                <p className="mt-2 text-xs text-[var(--color-text-secondary)]">
+                  Use at least 8 characters.
+                </p>
               </div>
 
               {/* Confirm password */}
@@ -142,8 +275,14 @@ function Register() {
                   <input
                     id="confirm-password"
                     type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(event) =>
+                      setConfirmPassword(event.target.value)
+                    }
                     placeholder="Confirm your password"
-                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 pr-12 text-sm text-[var(--color-text)] outline-none transition placeholder:text-gray-400 focus:border-[var(--color-coral)] focus:ring-2 focus:ring-[var(--color-coral-light)]"
+                    disabled={loading}
+                    autoComplete="new-password"
+                    className="w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 pr-12 text-sm text-[var(--color-text)] outline-none transition placeholder:text-gray-400 focus:border-[var(--color-coral)] focus:ring-2 focus:ring-[var(--color-coral-light)] disabled:cursor-not-allowed disabled:opacity-60"
                   />
 
                   <button
@@ -156,7 +295,8 @@ function Register() {
                     onClick={() =>
                       setShowConfirmPassword(!showConfirmPassword)
                     }
-                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)]"
+                    disabled={loading}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)] disabled:opacity-50"
                   >
                     {showConfirmPassword ? (
                       <EyeOff size={18} />
@@ -170,9 +310,10 @@ function Register() {
               {/* Submit */}
               <button
                 type="submit"
-                className="w-full rounded-xl bg-[var(--color-coral)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-coral-light)] focus:ring-offset-2"
+                disabled={loading}
+                className="w-full rounded-xl bg-[var(--color-coral)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-navy)] focus:outline-none focus:ring-2 focus:ring-[var(--color-coral-light)] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Create account
+                {loading ? "Creating account..." : "Create account"}
               </button>
 
             </form>
@@ -183,6 +324,7 @@ function Register() {
                 Already have an account?{" "}
                 <button
                   type="button"
+                  onClick={() => navigate("/login")}
                   className="font-semibold text-[var(--color-coral)] transition hover:text-[var(--color-navy)]"
                 >
                   Sign in

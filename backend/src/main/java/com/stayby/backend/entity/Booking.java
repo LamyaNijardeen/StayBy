@@ -29,12 +29,18 @@ public class Booking {
     @Column(nullable = false)
     private Integer guests;
 
+    @Column(length = 150)
+    private String purpose;
+
     @Column(nullable = false)
     private Double totalPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private BookingStatus status;
+
+    @Column(length = 500)
+    private String rejectionReason;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -129,5 +135,21 @@ public class Booking {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public String getRejectionReason() {
+        return rejectionReason;
+    }
+
+    public void setRejectionReason(String rejectionReason) {
+        this.rejectionReason = rejectionReason;
+    }
+
+    public String getPurpose() {
+        return purpose;
+    }
+
+    public void setPurpose(String purpose) {
+        this.purpose = purpose;
     }
 }

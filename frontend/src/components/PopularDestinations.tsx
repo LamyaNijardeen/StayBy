@@ -1,33 +1,144 @@
-import { ArrowRight } from "lucide-react";
+import {
+  ArrowRight,
+  Loader2,
+  MapPin,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const destinations = [
-  {
-    name: "Colombo",
-    stays: "120+ stays",
-    image:
-      "https://images.unsplash.com/photo-1586613830220-3f4b2b7c9f6f?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    name: "Kandy",
-    stays: "80+ stays",
-    image:
-      "https://images.unsplash.com/photo-1588598198321-9735fd524a0d?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    name: "Galle",
-    stays: "65+ stays",
-    image:
-      "https://images.unsplash.com/photo-1590650153855-d9e808231d41?auto=format&fit=crop&w=800&q=80",
-  },
-  {
-    name: "Ella",
-    stays: "40+ stays",
-    image:
-      "https://images.unsplash.com/photo-1588598198321-9735fd524a0d?auto=format&fit=crop&w=800&q=80",
-  },
-];
+import {
+  getAllProperties,
+  getPropertyImages,
+  getImageUrl,
+  type PropertySearchResponse,
+} from "../services/propertyService";
+
+interface Destination {
+  name: string;
+  stays: number;
+  image: string;
+}
 
 function PopularDestinations() {
+  const navigate = useNavigate();
+
+  const [destinations, setDestinations] =
+    useState<Destination[]>([]);
+
+  const [loading, setLoading] =
+    useState(true);
+
+  useEffect(() => {
+    const loadDestinations = async () => {
+      try {
+        setLoading(true);
+
+        const properties =
+          await getAllProperties(true);
+
+        /*
+         * Group properties by city.
+         */
+        const cityMap = new Map<
+          string,
+          PropertySearchResponse[]
+        >();
+
+        properties.forEach((property) => {
+          const city = property.city?.trim();
+
+          if (!city) {
+            return;
+          }
+
+          const existing =
+            cityMap.get(city) || [];
+
+          existing.push(property);
+
+          cityMap.set(city, existing);
+        });
+
+        /*
+         * Sort cities by number of properties.
+         * Most available properties appear first.
+         */
+        const sortedCities = Array.from(
+          cityMap.entries()
+        )
+          .sort(
+            (a, b) =>
+              b[1].length - a[1].length
+          )
+          .slice(0, 4);
+
+        /*
+         * Use the first property's image as the
+         * destination image.
+         */
+        const destinationResults =
+          await Promise.all(
+            sortedCities.map(
+              async ([city, cityProperties]) => {
+                let image = "";
+
+                try {
+                  const images =
+                    await getPropertyImages(
+                      cityProperties[0].id
+                    );
+
+                  if (images.length > 0) {
+                    image = getImageUrl(
+                      images[0].imageUrl
+                    );
+                  }
+                } catch (error) {
+                  console.warn(
+                    `Failed to load image for ${city}:`,
+                    error
+                  );
+                }
+
+                return {
+                  name: city,
+                  stays: cityProperties.length,
+                  image,
+                };
+              }
+            )
+          );
+
+        setDestinations(
+          destinationResults
+        );
+      } catch (error) {
+        console.error(
+          "Failed to load destinations:",
+          error
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadDestinations();
+  }, []);
+
+  const handleDestinationClick = (
+    city: string
+  ) => {
+    navigate(
+      `/search?city=${encodeURIComponent(
+        city
+      )}`
+    );
+  };
+
+  const handleExploreAll = () => {
+    navigate("/search");
+  };
+
   return (
     <section
       id="explore"
@@ -47,12 +158,14 @@ function PopularDestinations() {
             </h2>
 
             <p className="mt-3 max-w-xl text-[var(--color-text-secondary)]">
-              Discover comfortable places to stay wherever you're headed.
+              Explore destinations based on real
+              accommodation available on StayBy.
             </p>
           </div>
 
           <button
             type="button"
+            onClick={handleExploreAll}
             className="flex items-center gap-2 self-start text-sm font-semibold text-[var(--color-navy)] transition hover:text-[var(--color-coral)] sm:self-auto"
           >
             Explore all
@@ -60,35 +173,92 @@ function PopularDestinations() {
           </button>
         </div>
 
+        {/* Loading */}
+        {loading && (
+          <div className="flex items-center justify-center py-16">
+            <Loader2
+              size={28}
+              className="animate-spin text-[var(--color-coral)]"
+            />
+          </div>
+        )}
+
+        {/* Empty */}
+        {!loading &&
+          destinations.length === 0 && (
+            <div className="mt-10 rounded-2xl border border-[var(--color-border)] bg-[var(--color-background)] px-6 py-12 text-center">
+              <p className="text-sm font-medium text-[var(--color-navy)]">
+                No destinations available yet.
+              </p>
+
+              <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+                Destinations will appear as properties
+                are added.
+              </p>
+            </div>
+          )}
+
         {/* Destination cards */}
-        <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-          {destinations.map((destination) => (
-            <article
-              key={destination.name}
-              className="group overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5"
-            >
-              {/* Image */}
-              <div className="aspect-[4/3] overflow-hidden">
-                <img
-                  src={destination.image}
-                  alt={destination.name}
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                />
-              </div>
+        {!loading &&
+          destinations.length > 0 && (
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {destinations.map(
+                (destination) => (
+                  <article
+                    key={destination.name}
+                    onClick={() =>
+                      handleDestinationClick(
+                        destination.name
+                      )
+                    }
+                    className="group cursor-pointer overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5"
+                  >
+                    {/* Image */}
+                    <div className="relative aspect-[4/3] overflow-hidden bg-[var(--color-background)]">
+                      {destination.image ? (
+                        <img
+                          src={destination.image}
+                          alt={destination.name}
+                          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center">
+                          <MapPin
+                            size={36}
+                            strokeWidth={1.5}
+                            className="text-[var(--color-coral)]"
+                          />
+                        </div>
+                      )}
+                    </div>
 
-              {/* Content */}
-              <div className="p-5">
-                <h3 className="text-lg font-semibold text-[var(--color-navy)]">
-                  {destination.name}
-                </h3>
+                    {/* Content */}
+                    <div className="flex items-center justify-between p-5">
+                      <div>
+                        <h3 className="text-lg font-semibold text-[var(--color-navy)]">
+                          {destination.name}
+                        </h3>
 
-                <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                  {destination.stays}
-                </p>
-              </div>
-            </article>
-          ))}
-        </div>
+                        <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                          {destination.stays}{" "}
+                          {destination.stays === 1
+                            ? "stay"
+                            : "stays"}
+                        </p>
+                      </div>
+
+                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[var(--color-coral-light)] transition group-hover:bg-[var(--color-coral)]">
+                        <ArrowRight
+                          size={16}
+                          className="text-[var(--color-coral)] transition group-hover:text-white"
+                        />
+                      </div>
+                    </div>
+                  </article>
+                )
+              )}
+            </div>
+          )}
 
       </div>
     </section>
@@ -96,3 +266,4 @@ function PopularDestinations() {
 }
 
 export default PopularDestinations;
+

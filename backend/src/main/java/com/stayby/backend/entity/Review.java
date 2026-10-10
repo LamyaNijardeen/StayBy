@@ -19,6 +19,10 @@ public class Review {
     @JoinColumn(name = "property_id", nullable = false)
     private Property property;
 
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "booking_id", nullable = false, unique = true)
+    private Booking booking;
+
     @Column(nullable = false)
     private Integer rating;
 
@@ -91,5 +95,13 @@ public class Review {
 
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
+    }
+
+    public Booking getBooking() {
+        return booking;
+    }
+
+    public void setBooking(Booking booking) {
+        this.booking = booking;
     }
 }

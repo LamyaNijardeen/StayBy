@@ -1,38 +1,193 @@
-import { ArrowRight, Heart, Star } from "lucide-react";
+import { ArrowRight, Heart, Loader2, MapPin } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const stays = [
-  {
-    name: "Cozy City Stay",
-    location: "Colombo",
-    rating: "4.8",
-    reviews: "24",
-    price: "$25",
-    image:
-      "https://images.unsplash.com/photo-1560185008-b033106af5c3?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    name: "Hill View Home",
-    location: "Kandy",
-    rating: "4.7",
-    reviews: "18",
-    price: "$32",
-    image:
-      "https://images.unsplash.com/photo-1601918774946-25832a4be0d6?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    name: "Galle Haven",
-    location: "Galle",
-    rating: "4.9",
-    reviews: "31",
-    price: "$28",
-    image:
-      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=900&q=80",
-  },
-];
+import {
+  getAllProperties,
+  getPropertyImages,
+  getImageUrl,
+  getFavorites,
+  addFavorite,
+  removeFavorite,
+  type PropertySearchResponse,
+  type FavoriteResponse,
+} from "../services/propertyService";
 
 function FeaturedStays() {
+  const navigate = useNavigate();
+
+  const [properties, setProperties] = useState<
+    PropertySearchResponse[]
+  >([]);
+
+  const [propertyImages, setPropertyImages] = useState<
+    Record<number, string>
+  >({});
+
+  const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [favoriteLoading, setFavoriteLoading] = useState<
+    number | null
+  >(null);
+
+  const token = localStorage.getItem("token");
+  const userString = localStorage.getItem("user");
+
+  const user = userString
+    ? JSON.parse(userString)
+    : null;
+
+  const isLoggedIn = Boolean(token && user);
+
+  useEffect(() => {
+    const loadFeaturedProperties = async () => {
+      try {
+        setLoading(true);
+
+        /*
+         * Only verified properties are shown on the
+         * public Home page.
+         */
+        const propertyData = await getAllProperties(true);
+
+        /*
+         * Keep the Home page compact.
+         * The Search page remains the place to see
+         * the complete property list.
+         */
+        const featured = propertyData.slice(0, 6);
+
+        setProperties(featured);
+
+        /*
+         * Load the first property image for each
+         * featured property.
+         */
+        const imageResults = await Promise.all(
+          featured.map(async (property) => {
+            try {
+              const images = await getPropertyImages(
+                property.id
+              );
+
+              if (images.length > 0) {
+                return {
+                  propertyId: property.id,
+                  imageUrl: getImageUrl(
+                    images[0].imageUrl
+                  ),
+                };
+              }
+            } catch (error) {
+              console.warn(
+                `Failed to load image for property ${property.id}:`,
+                error
+              );
+            }
+
+            return null;
+          })
+        );
+
+        const imageMap: Record<number, string> = {};
+
+        imageResults.forEach((result) => {
+          if (result) {
+            imageMap[result.propertyId] =
+              result.imageUrl;
+          }
+        });
+
+        setPropertyImages(imageMap);
+
+        /*
+         * Favorites are only loaded for logged-in users.
+         */
+        if (isLoggedIn && user?.id) {
+          try {
+            const favorites: FavoriteResponse[] =
+              await getFavorites(user.id);
+
+            setFavoriteIds(
+              favorites.map(
+                (favorite) => favorite.property.id
+              )
+            );
+          } catch (error) {
+            console.warn(
+              "Failed to load favorites:",
+              error
+            );
+          }
+        }
+      } catch (error) {
+        console.error(
+          "Failed to load featured properties:",
+          error
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadFeaturedProperties();
+  }, []);
+
+  const handleFavorite = async (
+    propertyId: number
+  ) => {
+    if (!isLoggedIn || !user?.id) {
+      navigate("/login");
+      return;
+    }
+
+    try {
+      setFavoriteLoading(propertyId);
+
+      const isFavorite =
+        favoriteIds.includes(propertyId);
+
+      if (isFavorite) {
+        await removeFavorite(
+          propertyId,
+          user.id
+        );
+
+        setFavoriteIds((current) =>
+          current.filter(
+            (id) => id !== propertyId
+          )
+        );
+      } else {
+        await addFavorite(
+          propertyId,
+          user.id
+        );
+
+        setFavoriteIds((current) => [
+          ...current,
+          propertyId,
+        ]);
+      }
+    } catch (error) {
+      console.error(
+        "Failed to update favorite:",
+        error
+      );
+    } finally {
+      setFavoriteLoading(null);
+    }
+  };
+
+  const handleViewAll = () => {
+    navigate("/search");
+  };
+
   return (
-    <section className="bg-[var(--color-background)]">
+    <section
+  id="featured"
+  className="bg-[var(--color-background)] scroll-mt-24"
+>
       <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24">
 
         {/* Section heading */}
@@ -47,12 +202,14 @@ function FeaturedStays() {
             </h2>
 
             <p className="mt-3 max-w-xl text-[var(--color-text-secondary)]">
-              Handpicked stays that balance comfort, convenience, and value.
+              Discover verified accommodation available
+              through StayBy.
             </p>
           </div>
 
           <button
             type="button"
+            onClick={handleViewAll}
             className="flex items-center gap-2 self-start text-sm font-semibold text-[var(--color-navy)] transition hover:text-[var(--color-coral)] sm:self-auto"
           >
             View all stays
@@ -60,76 +217,152 @@ function FeaturedStays() {
           </button>
         </div>
 
-        {/* Stay cards */}
-        <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {stays.map((stay) => (
-            <article
-              key={stay.name}
-              className="group overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5"
-            >
-              {/* Image */}
-              <div className="relative aspect-[4/3] overflow-hidden">
-                <img
-                  src={stay.image}
-                  alt={stay.name}
-                  className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                />
+        {/* Loading */}
+        {loading && (
+          <div className="flex items-center justify-center py-16">
+            <Loader2
+              size={28}
+              className="animate-spin text-[var(--color-coral)]"
+            />
+          </div>
+        )}
 
-                {/* Favorite */}
-                <button
-                  type="button"
-                  aria-label={`Save ${stay.name}`}
-                  className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-[var(--color-navy)] shadow-sm backdrop-blur transition hover:bg-white hover:text-[var(--color-coral)]"
+        {/* Empty */}
+        {!loading && properties.length === 0 && (
+          <div className="mt-10 rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] px-6 py-12 text-center">
+            <p className="text-sm font-medium text-[var(--color-navy)]">
+              No featured properties available yet.
+            </p>
+
+            <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
+              Check back soon as more properties are added.
+            </p>
+          </div>
+        )}
+
+        {/* Property cards */}
+        {!loading && properties.length > 0 && (
+          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {properties.map((property) => {
+              const isFavorite =
+                favoriteIds.includes(property.id);
+
+              return (
+                <article
+                  key={property.id}
+                  onClick={() =>
+                    navigate(
+                      `/property/${property.id}`
+                    )
+                  }
+                  className="group cursor-pointer overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] transition duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5"
                 >
-                  <Heart size={18} strokeWidth={1.8} />
-                </button>
-              </div>
+                  {/* Image */}
+                  <div className="relative aspect-[4/3] overflow-hidden bg-[var(--color-background)]">
+                    {propertyImages[property.id] ? (
+                      <img
+                        src={
+                          propertyImages[
+                            property.id
+                          ]
+                        }
+                        alt={property.name}
+                        className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex h-full items-center justify-center">
+                        <MapPin
+                          size={36}
+                          strokeWidth={1.5}
+                          className="text-[var(--color-coral)]"
+                        />
+                      </div>
+                    )}
 
-              {/* Details */}
-              <div className="p-5">
+                    {/* Favorite */}
+                    <button
+                      type="button"
+                      aria-label={
+                        isFavorite
+                          ? `Remove ${property.name} from favorites`
+                          : `Save ${property.name}`
+                      }
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleFavorite(
+                          property.id
+                        );
+                      }}
+                      disabled={
+                        favoriteLoading ===
+                        property.id
+                      }
+                      className={`absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full shadow-sm backdrop-blur transition ${
+                        isFavorite
+                          ? "bg-[var(--color-coral)] text-white"
+                          : "bg-white/90 text-[var(--color-navy)] hover:bg-white hover:text-[var(--color-coral)]"
+                      }`}
+                    >
+                      {favoriteLoading ===
+                      property.id ? (
+                        <Loader2
+                          size={17}
+                          className="animate-spin"
+                        />
+                      ) : (
+                        <Heart
+                          size={18}
+                          strokeWidth={1.8}
+                          fill={
+                            isFavorite
+                              ? "currentColor"
+                              : "none"
+                          }
+                        />
+                      )}
+                    </button>
 
-                {/* Rating */}
-                <div className="flex items-center gap-1.5">
-                  <Star
-                    size={15}
-                    fill="currentColor"
-                    className="text-[var(--color-coral)]"
-                  />
+                    {/* Verified */}
+                    {property.verified && (
+                      <span className="absolute bottom-4 left-4 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-green-700 shadow-sm backdrop-blur">
+                        Verified
+                      </span>
+                    )}
+                  </div>
 
-                  <span className="text-sm font-semibold text-[var(--color-text)]">
-                    {stay.rating}
-                  </span>
+                  {/* Details */}
+                  <div className="p-5">
+                    <h3 className="text-lg font-semibold text-[var(--color-navy)]">
+                      {property.name}
+                    </h3>
 
-                  <span className="text-sm text-[var(--color-text-secondary)]">
-                    ({stay.reviews})
-                  </span>
-                </div>
+                    <div className="mt-2 flex items-center gap-1.5 text-sm text-[var(--color-text-secondary)]">
+                      <MapPin size={15} />
+                      <span>
+                        {property.city}
+                      </span>
+                    </div>
 
-                {/* Name */}
-                <h3 className="mt-3 text-lg font-semibold text-[var(--color-navy)]">
-                  {stay.name}
-                </h3>
+                    <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
+                      {property.propertyType}
+                    </p>
 
-                {/* Location */}
-                <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                  {stay.location}
-                </p>
+                    <div className="mt-5 flex items-center justify-between">
+                      <span className="text-sm font-semibold text-[var(--color-navy)]">
+                        View property
+                      </span>
 
-                {/* Price */}
-                <div className="mt-5 flex items-baseline gap-1">
-                  <span className="text-lg font-bold text-[var(--color-navy)]">
-                    {stay.price}
-                  </span>
-
-                  <span className="text-sm text-[var(--color-text-secondary)]">
-                    / night
-                  </span>
-                </div>
-
-              </div>
-            </article>
-          ))}
-        </div>
+                      <ArrowRight
+                        size={17}
+                        className="text-[var(--color-coral)] transition-transform duration-300 group-hover:translate-x-1"
+                      />
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
 
       </div>
     </section>

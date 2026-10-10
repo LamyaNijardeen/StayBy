@@ -2,6 +2,10 @@ package com.stayby.backend.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "properties")
@@ -15,8 +19,15 @@ public class Property {
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 
+    @OneToMany(mappedBy = "property", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PropertyImage> images = new ArrayList<>();
     @Column(nullable = false)
     private String name;
+
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "property_purposes", joinColumns = @JoinColumn(name = "property_id"))
+    @Column(name = "purpose", length = 150)
+    private Set<String> suitablePurposes = new HashSet<>();
 
     @Column(columnDefinition = "TEXT")
     private String description;
@@ -143,4 +154,23 @@ public class Property {
     public LocalDateTime getUpdatedAt() {
         return updatedAt;
     }
+
+    public List<PropertyImage> getImages() {
+        return images;
+    }
+
+    public void setImages(List<PropertyImage> images) {
+        this.images = images;
+    }
+
+    public Set<String> getSuitablePurposes() {
+        return suitablePurposes;
+    }
+
+    public void setSuitablePurposes(Set<String> suitablePurposes) {
+        this.suitablePurposes = suitablePurposes != null
+                ? suitablePurposes
+                : new HashSet<>();
+    }
+
 }
