@@ -1,4 +1,5 @@
-const API_BASE_URL = "http://localhost:8080";
+import { apiError } from "./apiError";
+import { API_BASE_URL } from "../config";
 
 export interface ComplaintResponse {
   id: number;
@@ -48,11 +49,7 @@ export async function createComplaint(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to submit complaint."
-    );
+    throw await apiError(response, "Failed to submit complaint.");
   }
 
   return response.json();
@@ -74,11 +71,7 @@ export async function getMyComplaints(): Promise<
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load complaints."
-    );
+    throw await apiError(response, "Failed to load complaints.");
   }
 
   return response.json();
@@ -100,11 +93,7 @@ export async function getAllComplaints(): Promise<
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load complaints."
-    );
+    throw await apiError(response, "Failed to load complaints.");
   }
 
   return response.json();
@@ -131,11 +120,7 @@ export async function updateComplaintStatus(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to update complaint status."
-    );
+    throw await apiError(response, "Failed to update complaint status.");
   }
 
   return response.json();
@@ -161,11 +146,7 @@ export async function updateComplaintResponse(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to save admin response."
-    );
+    throw await apiError(response, "Failed to save admin response.");
   }
 
   return response.json();

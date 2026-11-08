@@ -51,46 +51,18 @@ public class RoomImageService {
             );
         }
 
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Please select an image"
-            );
-        }
-
-        String contentType = file.getContentType();
-
-        if (contentType == null ||
-                !contentType.startsWith("image/")) {
-
-            throw new IllegalArgumentException(
-                    "Only image files are allowed"
-            );
-        }
+        UploadValidator.Checked checked =
+                UploadValidator.check(file, false);
 
         Files.createDirectories(uploadDirectory);
 
-        String originalFilename = file.getOriginalFilename();
-
-        String extension = "";
-
-        if (originalFilename != null &&
-                originalFilename.contains(".")) {
-
-            extension = originalFilename.substring(
-                    originalFilename.lastIndexOf(".")
-            );
-        }
-
         String filename =
-                UUID.randomUUID() + extension;
+                UUID.randomUUID() + checked.extension();
 
         Path filePath =
                 uploadDirectory.resolve(filename);
 
-        Files.copy(
-                file.getInputStream(),
-                filePath
-        );
+        Files.write(filePath, checked.bytes());
 
         RoomImage roomImage =
                 new RoomImage(

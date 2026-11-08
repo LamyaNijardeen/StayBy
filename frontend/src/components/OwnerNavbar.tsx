@@ -1,10 +1,11 @@
+import Avatar from "./Avatar";
+import { useProfileImage } from "../services/profileImage";
+import Logo from "./Logo";
 import {
   Bell,
-  Building2,
   CheckCheck,
   LogOut,
   Menu,
-  UserCircle,
   X,
   CalendarDays,
   Star,
@@ -37,6 +38,8 @@ function OwnerNavbar() {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  const profileImage = useProfileImage();
 
   const user = JSON.parse(
     localStorage.getItem("user") || "{}"
@@ -151,6 +154,27 @@ function OwnerNavbar() {
           refreshReviews: Date.now(),
         },
       });
+      return;
+    }
+
+    // Online payment received -> open that booking.
+    if (
+      notification.type === "PAYMENT_RECEIVED" &&
+      notification.relatedId
+    ) {
+      navigate(`/owner/bookings/${notification.relatedId}`);
+      return;
+    }
+
+    // A refund is waiting for the owner.
+    if (notification.type === "REFUND_REQUESTED") {
+      navigate("/owner/refunds");
+      return;
+    }
+
+    // Any other booking-related notice: open the booking if known.
+    if (notification.relatedId) {
+      navigate(`/owner/bookings/${notification.relatedId}`);
     }
   };
 
@@ -290,23 +314,10 @@ function OwnerNavbar() {
         <div className="flex items-center justify-between gap-3">
 
           {/* Logo */}
-          <Link
-            to="/owner/properties"
-            onClick={closeMenu}
-            className="flex shrink-0 items-center gap-2"
-          >
-            <Building2
-              size={22}
-              className="text-[var(--color-coral)]"
-            />
-
-            <span className="text-2xl font-bold tracking-tight text-[var(--color-navy)]">
-              StayBy
-            </span>
-          </Link>
+          <Logo to="/owner/properties" onClick={closeMenu} />
 
           {/* Desktop navigation */}
-          <div className="hidden items-center gap-8 md:flex">
+          <div className="hidden items-center gap-5 whitespace-nowrap lg:flex xl:gap-8">
 
             <Link
               to="/owner/properties"
@@ -350,7 +361,7 @@ function OwnerNavbar() {
               DESKTOP USER SECTION
           ================================================= */}
 
-          <div className="hidden items-center gap-3 sm:flex">
+          <div className="hidden items-center gap-2 lg:flex xl:gap-3">
 
             {/* Notification Bell */}
             <div className="relative">
@@ -488,8 +499,8 @@ function OwnerNavbar() {
             </div>
 
             {/* User */}
-            <div className="text-right">
-              <p className="text-sm font-semibold text-[var(--color-navy)]">
+            <div className="hidden text-right xl:block">
+              <p className="max-w-[9rem] truncate text-sm font-semibold text-[var(--color-navy)]">
                 {user.name || "Owner"}
               </p>
 
@@ -501,20 +512,24 @@ function OwnerNavbar() {
             {/* Profile */}
             <Link
               to="/owner/profile"
+              aria-label="Profile"
+              title="Profile"
               className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-navy)] transition hover:border-[var(--color-coral)] hover:text-[var(--color-coral)]"
             >
-              <UserCircle size={17} />
-              Profile
+              <Avatar name={user.name} imageUrl={profileImage} size={22} />
+              <span className="hidden xl:inline">Profile</span>
             </Link>
 
             {/* Logout */}
             <button
               type="button"
               onClick={handleLogout}
+              aria-label="Logout"
+              title="Logout"
               className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-navy)] transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
             >
               <LogOut size={16} />
-              Logout
+              <span className="hidden xl:inline">Logout</span>
             </button>
 
           </div>
@@ -523,7 +538,7 @@ function OwnerNavbar() {
               MOBILE ACTIONS
           ================================================= */}
 
-          <div className="flex items-center gap-2 sm:hidden">
+          <div className="flex items-center gap-2 lg:hidden">
 
             {/* Mobile notification bell */}
             <button
@@ -577,7 +592,7 @@ function OwnerNavbar() {
         =================================================== */}
 
         {isNotificationOpen && (
-          <div className="mt-4 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-sm sm:hidden">
+          <div className="mt-4 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-sm lg:hidden">
 
             <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
 
@@ -688,7 +703,7 @@ function OwnerNavbar() {
         =================================================== */}
 
         {isMenuOpen && (
-          <div className="mt-4 border-t border-[var(--color-border)] pt-4 md:hidden">
+          <div className="mt-4 border-t border-[var(--color-border)] pt-4 lg:hidden">
 
             <div className="flex flex-col gap-1">
 
@@ -749,7 +764,7 @@ function OwnerNavbar() {
                 onClick={closeMenu}
                 className="flex items-center gap-2 rounded-lg px-3 py-3 text-sm font-medium text-[var(--color-text-secondary)] transition hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
               >
-                <UserCircle size={17} />
+                <Avatar name={user.name} imageUrl={profileImage} size={22} />
                 Profile
               </Link>
 

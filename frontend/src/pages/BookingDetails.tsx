@@ -43,6 +43,8 @@ import {
   uploadBankTransferReceipt,
 } from "../services/paymentService";
 
+import { startPayHerePopup } from "../services/payhereCheckout";
+
 import {
   getTravelerRefund,
   type RefundResponse,
@@ -53,12 +55,7 @@ import type {
   PaymentResponse,
 } from "../services/paymentService";
 
-const DEFAULT_LOCATION: [number, number] = [
-  7.8731,
-  80.7718,
-];
-
-const API_BASE_URL = "http://localhost:8080";
+import { API_BASE_URL } from "../config";
 
 function MapCenterUpdater({
   position,
@@ -164,7 +161,7 @@ function BookingDetails() {
   const [existingPayment, setExistingPayment] =
     useState<PaymentResponse | null>(null);
 
-  const [loadingExistingPayment, setLoadingExistingPayment] =
+  const [, setLoadingExistingPayment] =
     useState(false);
 
   const [replaceReceipt, setReplaceReceipt] =
@@ -411,6 +408,18 @@ function BookingDetails() {
   const showPaymentSection =
     isAwaitingPayment;
 
+  // A bank-transfer receipt has been uploaded and the owner has not yet
+  // approved or rejected it. Until then a second payment must not start.
+  const existingPaymentStatus =
+    existingPayment?.status?.toUpperCase() ?? "";
+
+  const slipUnderReview =
+    isAwaitingPayment &&
+    !!existingPayment?.receiptUrl &&
+    existingPayment?.paymentMethod?.toUpperCase() === "BANK_TRANSFER" &&
+    existingPaymentStatus !== "FAILED" &&
+    existingPaymentStatus !== "PAID";
+
   const openBankTransfer = async () => {
     if (!booking) {
       return;
@@ -569,7 +578,7 @@ function BookingDetails() {
     };
 
   const handlePayHere = async () => {
-    if (!booking) {
+    if (!booking || slipUnderReview) {
       return;
     }
 
@@ -583,92 +592,28 @@ function BookingDetails() {
           booking.id
         );
 
-      const form =
-        document.createElement(
-          "form"
-        );
+      // Opens the PayHere payment window on top of this page.
+      await startPayHerePopup(checkout, {
+        // The traveler finished the pop-up. We do not know the
+        // result yet, so go to the page that waits for the
+        // backend to confirm the booking.
+        onCompleted: () => {
+          setPayHereLoading(false);
+          navigate(
+            `/payment/return?bookingId=${booking.id}`
+          );
+        },
 
-      form.method = "POST";
-      form.action =
-        checkout.checkoutUrl;
+        // The traveler closed the pop-up without paying.
+        onDismissed: () => {
+          setPayHereLoading(false);
+        },
 
-      form.style.display = "none";
-
-      const fields: Record<
-        string,
-        string
-      > = {
-        merchant_id:
-          checkout.merchant_id,
-
-        return_url:
-          checkout.return_url,
-
-        cancel_url:
-          checkout.cancel_url,
-
-        notify_url:
-          checkout.notify_url,
-
-        first_name:
-          checkout.first_name,
-
-        last_name:
-          checkout.last_name,
-
-        email:
-          checkout.email,
-
-        phone:
-          checkout.phone,
-
-        address:
-          checkout.address,
-
-        city:
-          checkout.city,
-
-        country:
-          checkout.country,
-
-        order_id:
-          checkout.order_id,
-
-        items:
-          checkout.items,
-
-        currency:
-          checkout.currency,
-
-        amount:
-          checkout.amount,
-
-        hash:
-          checkout.hash,
-      };
-
-      Object.entries(
-        fields
-      ).forEach(
-        ([name, value]) => {
-          const input =
-            document.createElement(
-              "input"
-            );
-
-          input.type = "hidden";
-          input.name = name;
-          input.value = value;
-
-          form.appendChild(input);
-        }
-      );
-
-      document.body.appendChild(
-        form
-      );
-
-      form.submit();
+        onError: (message) => {
+          setPayHereError(message);
+          setPayHereLoading(false);
+        },
+      });
     } catch (err) {
       setPayHereError(
         err instanceof Error
@@ -977,14 +922,38 @@ console.log("CANCEL DEBUG:", {
               className={`inline-flex w-fit items-center gap-2 rounded-full border px-4 py-2 text-sm font-semibold ${status.className}`}
             >
               <StatusIcon className="h-4 w-4" />
-              {booking.status}
+              {slipUnderReview
+                ? "Payment under review"
+                : booking.status}
             </div>
           </div>
         </div>
 
         {/* PAYMENT REQUIRED NOTICE */}
 
-        {isAwaitingPayment && (
+        {slipUnderReview && (
+          <div className="mb-6 rounded-2xl border border-green-200 bg-green-50 p-5">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white">
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              </div>
+
+              <div>
+                <h2 className="text-sm font-semibold text-green-800">
+                  Receipt submitted
+                </h2>
+
+                <p className="mt-1 text-sm leading-6 text-green-700">
+                  Your bank-transfer receipt is waiting for the owner to
+                  verify it. Your booking will be confirmed as soon as it
+                  is approved, so there is nothing more to pay.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isAwaitingPayment && !slipUnderReview && (
           <div className="mb-6 rounded-2xl border border-amber-200 bg-amber-50 p-5">
             <div className="flex items-start gap-3">
               <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white">
@@ -1291,13 +1260,17 @@ console.log("CANCEL DEBUG:", {
                     <h2 className="text-lg font-semibold text-[var(--color-navy)]">
                       {isPaymentRejected
                         ? "Submit a new payment receipt"
-                        : "Complete your payment"}
+                        : slipUnderReview
+                          ? "Payment under review"
+                          : "Complete your payment"}
                     </h2>
 
                     <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
                       {isPaymentRejected
                         ? "Your previous receipt was rejected. Submit a corrected receipt for owner verification."
-                        : `Pay LKR ${booking.totalPrice.toLocaleString()} to confirm your booking.`}
+                        : slipUnderReview
+                          ? "You have already submitted a bank-transfer receipt. Online payment is turned off while the owner checks it."
+                          : `Pay LKR ${booking.totalPrice.toLocaleString()} to confirm your booking.`}
                     </p>
                   </div>
                 </div>
@@ -1346,16 +1319,19 @@ console.log("CANCEL DEBUG:", {
 
                   <button
                     type="button"
+                    disabled={slipUnderReview}
                     onClick={() =>
                       setPaymentMethod(
                         "PAYHERE"
                       )
                     }
                     className={`rounded-2xl border p-5 text-left transition ${
-                      paymentMethod ===
-                      "PAYHERE"
-                        ? "border-[var(--color-coral)] bg-[var(--color-coral-light)]"
-                        : "border-[var(--color-border)] bg-white hover:border-[var(--color-coral)]/50 hover:bg-[var(--color-background)]"
+                      slipUnderReview
+                        ? "cursor-not-allowed border-[var(--color-border)] bg-[var(--color-background)] opacity-50"
+                        : paymentMethod ===
+                            "PAYHERE"
+                          ? "border-[var(--color-coral)] bg-[var(--color-coral-light)]"
+                          : "border-[var(--color-border)] bg-white hover:border-[var(--color-coral)]/50 hover:bg-[var(--color-background)]"
                     }`}
                   >
                     <div className="flex items-center justify-between">
@@ -1374,7 +1350,9 @@ console.log("CANCEL DEBUG:", {
                     </h3>
 
                     <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
-                      Continue to PayHere to make an online card payment.
+                      {slipUnderReview
+                        ? "Unavailable — your bank-transfer receipt is being verified."
+                        : "Continue to PayHere to make an online card payment."}
                     </p>
                   </button>
                 </div>
@@ -1827,7 +1805,8 @@ console.log("CANCEL DEBUG:", {
                 {/* PAYHERE PANEL */}
 
                 {paymentMethod ===
-                  "PAYHERE" && (
+                  "PAYHERE" &&
+                  !slipUnderReview && (
                   <div className="mt-6 rounded-2xl border border-[var(--color-border)] bg-[var(--color-background)] p-5">
                     <div className="flex items-start gap-3">
                       <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white">
@@ -2181,7 +2160,9 @@ console.log("CANCEL DEBUG:", {
 
                   {isPaymentRejected
                     ? "Submit new receipt"
-                    : "Complete payment"}
+                    : slipUnderReview
+                      ? "View payment status"
+                      : "Complete payment"}
                 </button>
               )}
 

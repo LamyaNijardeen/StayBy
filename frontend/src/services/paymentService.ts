@@ -1,4 +1,5 @@
-const API_BASE_URL = "http://localhost:8080";
+import { apiError } from "./apiError";
+import { API_BASE_URL } from "../config";
 
 export interface BankDetails {
   bankName: string;
@@ -65,11 +66,7 @@ export async function getBankDetails(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load bank details."
-    );
+    throw await apiError(response, "Failed to load bank details.");
   }
 
   return response.json();
@@ -99,11 +96,7 @@ export async function uploadBankTransferReceipt(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to submit bank transfer receipt."
-    );
+    throw await apiError(response, "Failed to submit bank transfer receipt.");
   }
 
   return response.json();
@@ -125,23 +118,7 @@ export async function getPaymentForBooking(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    let message = "Failed to load payment information.";
-
-    try {
-      const errorData = JSON.parse(errorText);
-
-      if (errorData.message) {
-        message = errorData.message;
-      }
-    } catch {
-      if (errorText) {
-        message = errorText;
-      }
-    }
-
-    throw new Error(message);
+    throw await apiError(response, "Failed to load payment information.");
   }
 
   return response.json();
@@ -163,23 +140,7 @@ export async function createPayHereCheckout(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    let message = "Unable to start PayHere payment.";
-
-    try {
-      const errorData = JSON.parse(errorText);
-
-      if (errorData.message) {
-        message = errorData.message;
-      }
-    } catch {
-      if (errorText) {
-        message = errorText;
-      }
-    }
-
-    throw new Error(message);
+    throw await apiError(response, "Unable to start PayHere payment.");
   }
 
   return response.json();
@@ -227,23 +188,7 @@ export async function getOwnerPendingPayments(): Promise<
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    let message = "Failed to load pending payments.";
-
-    try {
-      const errorData = JSON.parse(errorText);
-
-      if (errorData.message) {
-        message = errorData.message;
-      }
-    } catch {
-      if (errorText) {
-        message = errorText;
-      }
-    }
-
-    throw new Error(message);
+    throw await apiError(response, "Failed to load pending payments.");
   }
 
   return response.json();
@@ -265,23 +210,7 @@ export async function approveOwnerPayment(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    let message = "Failed to approve payment.";
-
-    try {
-      const errorData = JSON.parse(errorText);
-
-      if (errorData.message) {
-        message = errorData.message;
-      }
-    } catch {
-      if (errorText) {
-        message = errorText;
-      }
-    }
-
-    throw new Error(message);
+    throw await apiError(response, "Failed to approve payment.");
   }
 
   return response.json();
@@ -308,23 +237,7 @@ export async function rejectOwnerPayment(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    let message = "Failed to reject payment.";
-
-    try {
-      const errorData = JSON.parse(errorText);
-
-      if (errorData.message) {
-        message = errorData.message;
-      }
-    } catch {
-      if (errorText) {
-        message = errorText;
-      }
-    }
-
-    throw new Error(message);
+    throw await apiError(response, "Failed to reject payment.");
   }
 
   return response.json();

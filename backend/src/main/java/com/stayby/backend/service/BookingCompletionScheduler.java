@@ -5,6 +5,7 @@ import com.stayby.backend.entity.BookingStatus;
 import com.stayby.backend.repository.BookingRepository;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -20,38 +21,36 @@ public class BookingCompletionScheduler {
         this.bookingRepository = bookingRepository;
     }
 
+    /*
+     * Runs every minute.
+     *
+     * Marks CONFIRMED bookings as COMPLETED once their
+     * check-out date has passed. Only the bookings that
+     * actually need updating are loaded from the database.
+     */
     @Scheduled(fixedRate = 60000)
+    @Transactional
     public void completeFinishedBookings() {
 
-        LocalDate today = LocalDate.now();
+        List<Booking> finishedBookings =
+                bookingRepository.findByStatusAndCheckOutBefore(
+                        BookingStatus.CONFIRMED,
+                        LocalDate.now()
+                );
+
+        if (finishedBookings.isEmpty()) {
+            return;
+        }
+
+        for (Booking booking : finishedBookings) {
+            booking.setStatus(BookingStatus.COMPLETED);
+        }
+
+        bookingRepository.saveAll(finishedBookings);
 
         System.out.println(
-                "Booking completion scheduler running. Today: " + today
+                finishedBookings.size()
+                        + " booking(s) marked as COMPLETED."
         );
-
-        List<Booking> bookings =
-                bookingRepository.findAll();
-
-        for (Booking booking : bookings) {
-
-            System.out.println(
-                    "Checking booking #" + booking.getId()
-                            + " | status=" + booking.getStatus()
-                            + " | checkout=" + booking.getCheckOut()
-            );
-
-            if (booking.getStatus() == BookingStatus.CONFIRMED
-                    && booking.getCheckOut().isBefore(today)) {
-
-                booking.setStatus(BookingStatus.COMPLETED);
-
-                bookingRepository.save(booking);
-
-                System.out.println(
-                        "Booking #" + booking.getId()
-                                + " changed to COMPLETED."
-                );
-            }
-        }
     }
 }

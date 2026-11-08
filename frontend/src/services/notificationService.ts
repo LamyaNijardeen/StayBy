@@ -8,7 +8,7 @@ export interface NotificationResponse {
   createdAt: string;
 }
 
-const API_BASE_URL = "http://localhost:8080";
+import { API_BASE_URL } from "../config";
 
 // =========================================================
 // GET NOTIFICATIONS

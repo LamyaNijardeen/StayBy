@@ -1,7 +1,10 @@
-import { ArrowLeft, CheckCircle2, Mail, MapPin } from "lucide-react";
+import { CheckCircle2, Mail } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+
+import AuthShell from "../components/AuthShell";
+import { API_BASE_URL } from "../config";
 
 function VerifyEmail() {
   const navigate = useNavigate();
@@ -62,7 +65,7 @@ function VerifyEmail() {
       });
 
       const response = await fetch(
-        `http://localhost:8080/api/auth/verify-email?${params.toString()}`,
+        `${API_BASE_URL}/api/auth/verify-email?${params.toString()}`,
         {
           method: "POST",
         }
@@ -129,7 +132,7 @@ function VerifyEmail() {
       });
 
       const response = await fetch(
-        `http://localhost:8080/api/auth/resend-verification?${params.toString()}`,
+        `${API_BASE_URL}/api/auth/resend-verification?${params.toString()}`,
         {
           method: "POST",
         }
@@ -170,41 +173,7 @@ function VerifyEmail() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)]">
-
-      {/* Top bar */}
-      <header className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
-
-          <button
-            type="button"
-            onClick={() => navigate("/register")}
-            className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)]"
-          >
-            <ArrowLeft size={17} />
-            Back
-          </button>
-
-          <div className="flex items-center gap-2">
-            <MapPin
-              size={20}
-              strokeWidth={2}
-              className="text-[var(--color-coral)]"
-            />
-
-            <span className="text-xl font-bold tracking-tight text-[var(--color-navy)]">
-              StayBy
-            </span>
-          </div>
-
-          <div className="w-14" />
-        </div>
-      </header>
-
-      {/* Verification */}
-      <main className="flex min-h-[calc(100vh-81px)] items-center justify-center px-6 py-12">
-
-        <div className="w-full max-w-md">
+    <AuthShell backTo="/register">
 
           {/* Heading */}
           <div className="text-center">
@@ -348,10 +317,7 @@ function VerifyEmail() {
 
           </div>
 
-        </div>
-
-      </main>
-    </div>
+    </AuthShell>
   );
 }
 

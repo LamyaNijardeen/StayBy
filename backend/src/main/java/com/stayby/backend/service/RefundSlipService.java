@@ -64,6 +64,16 @@ public class RefundSlipService {
                         .format(DATE_FORMAT)
                         : "-";
 
+        String paymentMethod =
+                refund.getPayment() != null
+                        ? refund.getPayment().getPaymentMethod()
+                        : null;
+
+        String refundMethod =
+                "PAYHERE".equalsIgnoreCase(paymentMethod)
+                        ? "Card (PayHere)"
+                        : "Bank Transfer";
+
         String amount =
                 String.format(
                         "Rs. %,.2f",
@@ -249,7 +259,7 @@ public class RefundSlipService {
                         normalFont,
                         boldFont,
                         "Refund Method",
-                        "Bank Transfer",
+                        refundMethod,
                         y
                 );
 

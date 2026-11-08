@@ -1,5 +1,6 @@
 package com.stayby.backend.controller;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.stayby.backend.dto.RoomResponse;
 import com.stayby.backend.entity.Room;
 import com.stayby.backend.service.RoomService;
@@ -77,6 +78,7 @@ public class RoomController {
         }
     }
 
+    @PreAuthorize("hasRole('OWNER')")
     @PostMapping
     public ResponseEntity<?> createRoom(
             @PathVariable Long propertyId,
@@ -111,6 +113,7 @@ public class RoomController {
         }
     }
 
+    @PreAuthorize("hasRole('OWNER')")
     @PutMapping("/{roomId}")
     public ResponseEntity<?> updateRoom(
             @PathVariable Long propertyId,
@@ -153,6 +156,7 @@ public class RoomController {
         }
     }
 
+    @PreAuthorize("hasRole('OWNER')")
     @DeleteMapping("/{roomId}")
     public ResponseEntity<?> deleteRoom(
             @PathVariable Long propertyId,

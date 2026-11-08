@@ -9,6 +9,7 @@ import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 import { createBooking } from "../services/bookingService";
+import ErrorPopup from "../components/ErrorPopup";
 
 interface BookingLocationState {
   propertyId: number;
@@ -428,11 +429,7 @@ if (purpose === "Other" && !customPurpose.trim()) {
         </div>
 
         {/* Error */}
-        {error && (
-          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-            {error}
-          </div>
-        )}
+        <ErrorPopup message={error} onClose={() => setError("")} />
 
         {/* Content */}
         <div className="mt-10 grid gap-8 lg:grid-cols-[1fr_380px]">

@@ -6,6 +6,8 @@ import {
   Check,
   ImagePlus,
   MapPin,
+  Sparkles,
+  Wifi,
   X,
 } from "lucide-react";
 import {
@@ -14,6 +16,7 @@ import {
 } from "react-router-dom";
 
 import OwnerNavbar from "../components/OwnerNavbar";
+import NearbyPlaces from "../components/NearbyPlaces";
 
 import {
   getMyProperties,
@@ -33,9 +36,10 @@ import {
 
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import ErrorPopup from "../components/ErrorPopup";
 
 
-const API_BASE_URL = "http://localhost:8080";
+import { API_BASE_URL } from "../config";
 
 const PURPOSE_OPTIONS = [
   "Medical Visit",
@@ -50,6 +54,21 @@ const PURPOSE_OPTIONS = [
   "Sports / Competition",
   "Festival / Celebration",
   "Other",
+];
+
+const AMENITY_OPTIONS = [
+  "Free Wi-Fi",
+  "Air conditioning",
+  "Private bathroom",
+  "Free parking",
+  "Kitchen",
+  "Workspace",
+  "Washing machine",
+  "Refrigerator",
+  "TV",
+  "Hot water",
+  "Balcony",
+  "Breakfast included",
 ];
 
 const DEFAULT_LOCATION: [number, number] = [
@@ -128,6 +147,7 @@ function OwnerEditProperty() {
     latitude: null,
     longitude: null,
     suitablePurposes: [],
+    amenities: [],
   });
 
   const [existingImages, setExistingImages] = useState<
@@ -187,6 +207,7 @@ function OwnerEditProperty() {
           latitude: property.latitude ?? null,
           longitude: property.longitude ?? null,
           suitablePurposes: property.suitablePurposes || [],
+          amenities: property.amenities || [],
         });
         if (
           property.latitude !== null &&
@@ -268,6 +289,27 @@ function OwnerEditProperty() {
             (item) => item !== purpose
           )
           : [...current.suitablePurposes, purpose],
+      };
+    });
+
+    setError("");
+  };
+
+  /*
+   * Toggle an amenity on or off.
+   */
+  const handleAmenityChange = (amenity: string) => {
+    setForm((current) => {
+      const alreadySelected =
+        current.amenities.includes(amenity);
+
+      return {
+        ...current,
+        amenities: alreadySelected
+          ? current.amenities.filter(
+            (item) => item !== amenity
+          )
+          : [...current.amenities, amenity],
       };
     });
 
@@ -604,11 +646,7 @@ function OwnerEditProperty() {
         </div>
 
         {/* Error */}
-        {error && (
-          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-            {error}
-          </div>
-        )}
+        <ErrorPopup message={error} onClose={() => setError("")} />
 
         {/* Form */}
         <form
@@ -755,6 +793,90 @@ function OwnerEditProperty() {
               Choose all purposes that accurately describe the
               type of stay your property can accommodate.
             </p>
+          </section>
+
+          {/* Amenities */}
+          <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-coral-light)]">
+                <Wifi
+                  size={19}
+                  className="text-[var(--color-coral)]"
+                />
+              </div>
+
+              <div>
+                <h2 className="text-lg font-semibold text-[var(--color-navy)]">
+                  What this property offers
+                </h2>
+
+                <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
+                  Select the amenities actually available at your
+                  property. You can choose more than one.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {[
+                ...AMENITY_OPTIONS,
+                /* Keep any saved amenity that is not in the standard list */
+                ...form.amenities.filter(
+                  (item) => !AMENITY_OPTIONS.includes(item)
+                ),
+              ].map((amenity) => {
+                const selected =
+                  form.amenities.includes(amenity);
+
+                return (
+                  <label
+                    key={amenity}
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition ${selected
+                        ? "border-[var(--color-coral)] bg-[var(--color-coral-light)]"
+                        : "border-[var(--color-border)] bg-[var(--color-background)] hover:border-[var(--color-coral)]"
+                      }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={() =>
+                        handleAmenityChange(amenity)
+                      }
+                      className="sr-only"
+                    />
+
+                    <span
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${selected
+                          ? "border-[var(--color-coral)] bg-[var(--color-coral)] text-white"
+                          : "border-[var(--color-border)] bg-[var(--color-surface)]"
+                        }`}
+                    >
+                      {selected && <Check size={14} />}
+                    </span>
+
+                    <span
+                      className={`text-sm font-medium ${selected
+                          ? "text-[var(--color-navy)]"
+                          : "text-[var(--color-text)]"
+                        }`}
+                    >
+                      {amenity}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 flex items-start gap-2 text-xs leading-5 text-[var(--color-text-secondary)]">
+              <Sparkles
+                size={15}
+                className="mt-0.5 shrink-0 text-[var(--color-coral)]"
+              />
+              <p>
+                Only select amenities that guests can actually use
+                during their stay.
+              </p>
+            </div>
           </section>
 
           {/* Images */}
@@ -1047,6 +1169,26 @@ function OwnerEditProperty() {
 
             </div>
           </section>
+
+          {/* Nearby places (found automatically) */}
+          {propertyId && (
+            <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+              <h2 className="text-lg font-semibold text-[var(--color-navy)]">
+                Important places nearby
+              </h2>
+
+              <p className="mb-4 mt-1 text-xs text-[var(--color-text-secondary)]">
+                Travelers can find your stay by searching for these
+                places. If you moved the map pin, save first, then
+                refresh.
+              </p>
+
+              <NearbyPlaces
+                propertyId={Number(propertyId)}
+                editable
+              />
+            </section>
+          )}
 
           {/* Actions */}
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

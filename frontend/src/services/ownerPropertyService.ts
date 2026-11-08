@@ -1,4 +1,5 @@
-const API_BASE_URL = "http://localhost:8080";
+import { apiError } from "./apiError";
+import { API_BASE_URL } from "../config";
 
 export interface OwnerPropertyResponse {
   id: number;
@@ -10,8 +11,11 @@ export interface OwnerPropertyResponse {
   latitude: number | null;
   longitude: number | null;
   verified: boolean;
+  /** false = hidden from search by the owner */
+  listed?: boolean;
 
   suitablePurposes: string[];
+  amenities: string[];
 
   owner: {
     id: number;
@@ -30,6 +34,8 @@ export interface CreatePropertyRequest {
   longitude: number | null;
 
   suitablePurposes: string[];
+  amenities: string[];
+
 }
 
 /*
@@ -65,11 +71,7 @@ export async function getMyProperties(): Promise<
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load your properties."
-    );
+    throw await apiError(response, "Failed to load your properties.");
   }
 
   const properties: OwnerPropertyResponse[] =
@@ -111,11 +113,7 @@ export async function createProperty(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to create property."
-    );
+    throw await apiError(response, "Failed to create property.");
   }
 
   return response.json();
@@ -159,11 +157,7 @@ export async function uploadPropertyImage(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to upload property image."
-    );
+    throw await apiError(response, "Failed to upload property image.");
   }
 
   return response.json();
@@ -197,11 +191,7 @@ export async function getPropertyImages(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load property images."
-    );
+    throw await apiError(response, "Failed to load property images.");
   }
 
   return response.json();
@@ -235,11 +225,7 @@ export async function updateProperty(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to update property."
-    );
+    throw await apiError(response, "Failed to update property.");
   }
 
   return response.json();
@@ -270,10 +256,38 @@ export async function deleteProperty(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to delete property."
-    );
+    throw await apiError(response, "Failed to delete property.");
   }
+}
+
+/*
+ * Hide a property from search (listed = false) or show it again.
+ */
+export async function setPropertyListed(
+  propertyId: number,
+  listed: boolean
+): Promise<OwnerPropertyResponse> {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    throw new Error("Please log in first.");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/properties/${propertyId}/listed`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ listed }),
+    }
+  );
+
+  if (!response.ok) {
+    throw await apiError(response, "Failed to update the property.");
+  }
+
+  return response.json();
 }

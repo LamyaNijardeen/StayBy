@@ -1,4 +1,5 @@
-const API_BASE_URL = "http://localhost:8080";
+import { apiError } from "./apiError";
+import { API_BASE_URL } from "../config";
 
 export interface AdminDashboardStats {
   totalUsers: number;
@@ -39,11 +40,7 @@ export async function getAdminDashboardStats(): Promise<AdminDashboardStats> {
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load admin dashboard."
-    );
+    throw await apiError(response, "Failed to load admin dashboard.");
   }
 
   return response.json();
@@ -52,8 +49,40 @@ export interface AdminUser {
   id: number;
   name: string;
   email: string;
+  phone: string | null;
   role: string;
+  emailVerified: boolean;
+  suspended: boolean;
   createdAt: string;
+}
+
+export async function setUserSuspended(
+  id: number,
+  suspended: boolean
+): Promise<AdminUser> {
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    throw new Error("Please log in as an administrator.");
+  }
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/admin/users/${id}/suspended`,
+    {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ suspended }),
+    }
+  );
+
+  if (!response.ok) {
+    throw await apiError(response, "Failed to update the user.");
+  }
+
+  return response.json();
 }
 
 export async function getAdminUsers(): Promise<AdminUser[]> {
@@ -75,11 +104,7 @@ export async function getAdminUsers(): Promise<AdminUser[]> {
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load users."
-    );
+    throw await apiError(response, "Failed to load users.");
   }
 
   return response.json();
@@ -98,6 +123,7 @@ export interface AdminProperty {
   ownerId: number;
   ownerName: string;
   ownerEmail: string;
+  ownerPhone: string | null;
 }
 
 export async function getAdminProperties(): Promise<AdminProperty[]> {
@@ -119,11 +145,7 @@ export async function getAdminProperties(): Promise<AdminProperty[]> {
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load properties."
-    );
+    throw await apiError(response, "Failed to load properties.");
   }
 
   return response.json();
@@ -171,11 +193,7 @@ export async function getAdminBookings(): Promise<AdminBooking[]> {
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load bookings."
-    );
+    throw await apiError(response, "Failed to load bookings.");
   }
 
   return response.json();
@@ -217,11 +235,7 @@ export async function getAdminReviews(): Promise<AdminReview[]> {
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load reviews."
-    );
+    throw await apiError(response, "Failed to load reviews.");
   }
 
   return response.json();
@@ -249,11 +263,7 @@ export async function deleteAdminReview(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to delete review."
-    );
+    throw await apiError(response, "Failed to delete review.");
   }
 }
 

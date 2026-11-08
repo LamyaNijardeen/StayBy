@@ -1,3 +1,6 @@
+import Avatar from "./Avatar";
+import { useProfileImage } from "../services/profileImage";
+import Logo from "./Logo";
 import {
   Bell,
   CalendarDays,
@@ -33,6 +36,8 @@ function TravelerNavbar() {
   const notificationRef = useRef<HTMLDivElement>(null);
 
   const navigate = useNavigate();
+
+  const profileImage = useProfileImage();
 
   const user = JSON.parse(
     localStorage.getItem("user") || "{}"
@@ -249,13 +254,20 @@ const handleNotificationClick = async (
   setShowNotifications(false);
   closeMenu();
 
+  // Booking / payment / refund notices: open that booking.
   if (
-    notification.type ===
-      "BOOKING_CONFIRMED" ||
-    notification.type ===
-      "BOOKING_REJECTED"
+    notification.type === "BOOKING_CONFIRMED" ||
+    notification.type === "BOOKING_REJECTED" ||
+    notification.type === "BOOKING_CANCELLED" ||
+    notification.type === "PAYMENT_REQUIRED" ||
+    notification.type === "PAYMENT_REJECTED" ||
+    notification.type === "REFUND_REQUESTED"
   ) {
-    navigate("/my-bookings");
+    navigate(
+      notification.relatedId
+        ? `/my-bookings/${notification.relatedId}`
+        : "/my-bookings"
+    );
     return;
   }
 
@@ -314,34 +326,23 @@ const handleNotificationClick = async (
             TOP ROW
         ===================================================== */}
 
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
 
           {/* LOGO */}
 
-          <Link
-            to="/"
-            onClick={closeMenu}
-            className="flex items-center gap-2"
-          >
-            <span className="text-2xl font-bold tracking-tight text-[var(--color-navy)]">
-              Stay
-              <span className="text-[var(--color-coral)]">
-                By
-              </span>
-            </span>
-          </Link>
+          <Logo to="/" onClick={closeMenu} />
 
           {/* ===================================================
               DESKTOP NAVIGATION
           =================================================== */}
 
-          <div className="hidden items-center gap-8 md:flex">
+          <div className="hidden items-center gap-5 whitespace-nowrap lg:flex xl:gap-8">
 
             <Link
               to="/search"
               className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)]"
             >
-              <Search size={16} />
+              <Search size={16} className="hidden xl:block" />
               Search
             </Link>
 
@@ -349,7 +350,7 @@ const handleNotificationClick = async (
               to="/my-bookings"
               className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)]"
             >
-              <CalendarDays size={16} />
+              <CalendarDays size={16} className="hidden xl:block" />
               My Bookings
             </Link>
 
@@ -357,7 +358,7 @@ const handleNotificationClick = async (
               to="/favorites"
               className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)]"
             >
-              <Heart size={16} />
+              <Heart size={16} className="hidden xl:block" />
               Favorites
             </Link>
 
@@ -365,7 +366,7 @@ const handleNotificationClick = async (
               to="/complaints"
               className="flex items-center gap-1.5 text-sm font-medium text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)]"
             >
-              <FileWarning size={16} />
+              <FileWarning size={16} className="hidden xl:block" />
               Complaints
             </Link>
           </div>
@@ -374,7 +375,7 @@ const handleNotificationClick = async (
               DESKTOP RIGHT
           =================================================== */}
 
-          <div className="hidden items-center gap-4 md:flex">
+          <div className="hidden items-center gap-2 lg:flex xl:gap-4">
 
             {/* NOTIFICATIONS */}
 
@@ -523,15 +524,10 @@ const handleNotificationClick = async (
               to="/profile"
               className="flex items-center gap-2 rounded-xl px-2 py-2 transition hover:bg-[var(--color-background)]"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-coral-light)]">
-                <User
-                  size={16}
-                  className="text-[var(--color-coral)]"
-                />
-              </div>
+              <Avatar name={user.name} imageUrl={profileImage} size={32} />
 
-              <div className="text-left">
-                <p className="text-sm font-semibold text-[var(--color-navy)]">
+              <div className="hidden text-left xl:block">
+                <p className="max-w-[9rem] truncate text-sm font-semibold text-[var(--color-navy)]">
                   {user.name || "Traveler"}
                 </p>
 
@@ -546,10 +542,12 @@ const handleNotificationClick = async (
             <button
               type="button"
               onClick={handleLogout}
+              aria-label="Logout"
+              title="Logout"
               className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-navy)] transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
             >
               <LogOut size={16} />
-              Logout
+              <span className="hidden xl:inline">Logout</span>
             </button>
           </div>
 
@@ -564,7 +562,7 @@ const handleNotificationClick = async (
                 (current) => !current
               )
             }
-            className="rounded-lg p-2 text-[var(--color-navy)] transition hover:bg-[var(--color-background)] md:hidden"
+            className="rounded-lg p-2 text-[var(--color-navy)] transition hover:bg-[var(--color-background)] lg:hidden"
             aria-label={
               isMenuOpen
                 ? "Close menu"
@@ -585,7 +583,7 @@ const handleNotificationClick = async (
         ===================================================== */}
 
         {isMenuOpen && (
-          <div className="mt-4 border-t border-[var(--color-border)] pt-4 md:hidden">
+          <div className="mt-4 border-t border-[var(--color-border)] pt-4 lg:hidden">
             <div className="flex flex-col gap-1">
 
               {/* SEARCH */}
@@ -813,4 +811,3 @@ const handleNotificationClick = async (
 }
 
 export default TravelerNavbar;
-

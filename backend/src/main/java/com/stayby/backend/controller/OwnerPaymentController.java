@@ -1,5 +1,6 @@
 package com.stayby.backend.controller;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.stayby.backend.entity.Booking;
 import com.stayby.backend.entity.BookingStatus;
 import com.stayby.backend.entity.Role;
@@ -20,6 +21,7 @@ import java.util.Map;
 
 @RestController
 @RequestMapping("/api/owner/payment")
+@PreAuthorize("hasRole('OWNER')")
 public class OwnerPaymentController {
 
     private final UserRepository userRepository;

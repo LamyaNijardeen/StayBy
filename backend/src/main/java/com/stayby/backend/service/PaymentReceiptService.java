@@ -75,18 +75,8 @@ public class PaymentReceiptService {
                                         "Please select a payment receipt");
                 }
 
-                String contentType = file.getContentType();
-
-                boolean validImage = "image/jpeg".equalsIgnoreCase(contentType)
-                                || "image/png".equalsIgnoreCase(contentType)
-                                || "image/webp".equalsIgnoreCase(contentType);
-
-                boolean validPdf = "application/pdf".equalsIgnoreCase(contentType);
-
-                if (!validImage && !validPdf) {
-                        throw new IllegalArgumentException(
-                                        "Only JPG, PNG, WEBP, or PDF receipts are allowed");
-                }
+                UploadValidator.Checked checked =
+                                UploadValidator.check(file, true);
 
                 // ---------------------------------------------------------
                 // Validate transfer reference
@@ -144,25 +134,10 @@ public class PaymentReceiptService {
                 Files.createDirectories(uploadDirectory);
 
                 // ---------------------------------------------------------
-                // Get file extension
+                // Generate unique filename (extension from the real content)
                 // ---------------------------------------------------------
 
-                String originalFilename = file.getOriginalFilename();
-
-                String extension = "";
-
-                if (originalFilename != null &&
-                                originalFilename.contains(".")) {
-
-                        extension = originalFilename.substring(
-                                        originalFilename.lastIndexOf("."));
-                }
-
-                // ---------------------------------------------------------
-                // Generate unique filename
-                // ---------------------------------------------------------
-
-                String filename = UUID.randomUUID() + extension;
+                String filename = UUID.randomUUID() + checked.extension();
 
                 Path filePath = uploadDirectory.resolve(filename);
 
@@ -170,9 +145,7 @@ public class PaymentReceiptService {
                 // Save physical file
                 // ---------------------------------------------------------
 
-                Files.copy(
-                                file.getInputStream(),
-                                filePath);
+                Files.write(filePath, checked.bytes());
 
                 // ---------------------------------------------------------
                 // Save payment information

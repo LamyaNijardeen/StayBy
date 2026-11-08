@@ -20,6 +20,10 @@ public class User {
     @Column
     private String phone;
 
+    /** e.g. /uploads/profile-images/12-ab34.jpg (null = no picture). */
+    @Column
+    private String profileImageUrl;
+
     @Column(nullable = false)
     private String password;
 
@@ -30,11 +34,27 @@ public class User {
     @Column(nullable = false, columnDefinition = "boolean default true")
     private boolean emailVerified = true;
 
+    /** Blocked by an administrator: cannot sign in or use the API. */
+    @Column(nullable = false, columnDefinition = "boolean default false")
+    private boolean suspended = false;
+
     @Column
     private String verificationCodeHash;
 
     @Column
     private LocalDateTime verificationCodeExpiresAt;
+
+    // Forgot-password code (never stored in plain text)
+    @Column
+    private String passwordResetCodeHash;
+
+    @Column
+    private LocalDateTime passwordResetExpiresAt;
+
+    // Wrong guesses for the current code; Integer so old rows (null) work
+    @Column
+    private Integer passwordResetAttempts;
+
     @Column
     private String bankName;
 
@@ -98,6 +118,14 @@ public class User {
         this.phone = phone;
     }
 
+    public String getProfileImageUrl() {
+        return profileImageUrl;
+    }
+
+    public void setProfileImageUrl(String profileImageUrl) {
+        this.profileImageUrl = profileImageUrl;
+    }
+
     public void setEmail(String email) {
         this.email = email;
     }
@@ -126,6 +154,14 @@ public class User {
         this.emailVerified = emailVerified;
     }
 
+    public boolean isSuspended() {
+        return suspended;
+    }
+
+    public void setSuspended(boolean suspended) {
+        this.suspended = suspended;
+    }
+
     public String getVerificationCodeHash() {
         return verificationCodeHash;
     }
@@ -141,6 +177,31 @@ public class User {
     public void setVerificationCodeExpiresAt(
             LocalDateTime verificationCodeExpiresAt) {
         this.verificationCodeExpiresAt = verificationCodeExpiresAt;
+    }
+
+    public String getPasswordResetCodeHash() {
+        return passwordResetCodeHash;
+    }
+
+    public void setPasswordResetCodeHash(String passwordResetCodeHash) {
+        this.passwordResetCodeHash = passwordResetCodeHash;
+    }
+
+    public LocalDateTime getPasswordResetExpiresAt() {
+        return passwordResetExpiresAt;
+    }
+
+    public void setPasswordResetExpiresAt(
+            LocalDateTime passwordResetExpiresAt) {
+        this.passwordResetExpiresAt = passwordResetExpiresAt;
+    }
+
+    public Integer getPasswordResetAttempts() {
+        return passwordResetAttempts;
+    }
+
+    public void setPasswordResetAttempts(Integer passwordResetAttempts) {
+        this.passwordResetAttempts = passwordResetAttempts;
     }
 
     public String getBankName() {

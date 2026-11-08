@@ -4,12 +4,12 @@ import {
   Mail,
   User,
 } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import TravelerNavbar from "../components/TravelerNavbar";
+import ProfilePhotoEditor from "../components/ProfilePhotoEditor";
+import AccountSettings from "../components/AccountSettings";
 
 function Profile() {
-  const navigate = useNavigate();
-
   let user: {
     id?: number;
     name?: string;
@@ -76,9 +76,7 @@ function Profile() {
 
               {/* Avatar */}
 
-              <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[var(--color-coral-light)] text-2xl font-bold text-[var(--color-coral)]">
-                {displayName.charAt(0).toUpperCase()}
-              </div>
+              <ProfilePhotoEditor name={displayName} />
 
               {/* User information */}
 
@@ -228,10 +226,11 @@ function Profile() {
 
         </section>
 
+        <AccountSettings />
+
       </main>
     </div>
   );
 }
 
 export default Profile;
-

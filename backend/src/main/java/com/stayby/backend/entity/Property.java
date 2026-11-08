@@ -29,6 +29,11 @@ public class Property {
     @Column(name = "purpose", length = 150)
     private Set<String> suitablePurposes = new HashSet<>();
 
+    @ElementCollection(fetch = FetchType.EAGER)
+    @CollectionTable(name = "property_amenities", joinColumns = @JoinColumn(name = "property_id"))
+    @Column(name = "amenity", length = 150)
+    private Set<String> amenities = new HashSet<>();
+
     @Column(columnDefinition = "TEXT")
     private String description;
 
@@ -47,6 +52,10 @@ public class Property {
 
     @Column(nullable = false)
     private boolean verified = false;
+
+    /** The owner can hide a property from search without deleting it. */
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean listed = true;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -139,6 +148,14 @@ public class Property {
         this.longitude = longitude;
     }
 
+    public boolean isListed() {
+        return listed;
+    }
+
+    public void setListed(boolean listed) {
+        this.listed = listed;
+    }
+
     public boolean isVerified() {
         return verified;
     }
@@ -170,6 +187,16 @@ public class Property {
     public void setSuitablePurposes(Set<String> suitablePurposes) {
         this.suitablePurposes = suitablePurposes != null
                 ? suitablePurposes
+                : new HashSet<>();
+    }
+
+    public Set<String> getAmenities() {
+        return amenities;
+    }
+
+    public void setAmenities(Set<String> amenities) {
+        this.amenities = amenities != null
+                ? amenities
                 : new HashSet<>();
     }
 

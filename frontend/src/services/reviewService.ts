@@ -1,3 +1,4 @@
+import { apiError } from "./apiError";
 export interface ReviewResponse {
   id: number;
   propertyId: number;
@@ -7,7 +8,7 @@ export interface ReviewResponse {
   createdAt: string;
 }
 
-const API_BASE_URL = "http://localhost:8080";
+import { API_BASE_URL } from "../config";
 
 // =========================================================
 // CREATE REVIEW
@@ -45,11 +46,7 @@ export async function createReview(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to submit review."
-    );
+    throw await apiError(response, "Failed to submit review.");
   }
 
   return response.json();
@@ -62,28 +59,19 @@ export async function createReview(
 export async function getPropertyReviews(
   propertyId: number
 ): Promise<ReviewResponse[]> {
-  const token = localStorage.getItem("token");
-
-  if (!token) {
-    throw new Error("Please log in to view property reviews.");
-  }
-
+  /*
+   * Reviews are public, so no token is sent. (A stale token on a
+   * public endpoint can make the server answer 401.)
+   */
   const response = await fetch(
     `${API_BASE_URL}/api/reviews/property/${propertyId}`,
     {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
     }
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to fetch property reviews."
-    );
+    throw await apiError(response, "Failed to fetch property reviews.");
   }
 
   return response.json();
@@ -112,11 +100,7 @@ export async function getReviewForBooking(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Review not found."
-    );
+    throw await apiError(response, "Review not found.");
   }
 
   return response.json();

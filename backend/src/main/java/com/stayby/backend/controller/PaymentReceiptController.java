@@ -1,5 +1,6 @@
 package com.stayby.backend.controller;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.stayby.backend.entity.Payment;
 import com.stayby.backend.service.PaymentReceiptService;
 import org.springframework.http.HttpStatus;
@@ -27,6 +28,7 @@ public class PaymentReceiptController {
     // =========================================================
     // UPLOAD / RESUBMIT BANK TRANSFER RECEIPT
     // =========================================================
+    @PreAuthorize("hasRole('TRAVELER')")
     @PostMapping("/booking/{bookingId}/bank-transfer")
     public ResponseEntity<?> uploadReceipt(
             @PathVariable Long bookingId,

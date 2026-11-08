@@ -1,9 +1,9 @@
+import { showAlert } from "../services/dialog";
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Heart,
   MapPin,
-  Trash2,
   Loader2,
   Building2,
 } from "lucide-react";
@@ -138,7 +138,7 @@ const Favorites = () => {
     } catch (err) {
       console.error("Failed to remove favorite:", err);
 
-      alert(
+      showAlert(
         err instanceof Error
           ? err.message
           : "Failed to remove favorite"
@@ -210,7 +210,7 @@ if (loading) {
             </div>
 
             {favorites.length > 0 && (
-              <div className="rounded-full bg-[#FCE9E4] px-4 py-2 text-sm font-medium text-[#C9573D]">
+              <div className="w-fit rounded-full bg-[#FCE9E4] px-4 py-2 text-sm font-medium text-[#C9573D]">
                 {favorites.length}{" "}
                 {favorites.length === 1
                   ? "saved property"

@@ -1,6 +1,10 @@
+import { showAlert, showConfirm } from "../services/dialog";
 import { useEffect, useState } from "react";
 import {
   Building2,
+  Eye,
+  EyeOff,
+  Plus,
   MapPin,
   Pencil,
   Trash2,
@@ -16,6 +20,7 @@ import {
   getMyProperties,
   getPropertyImages,
   deleteProperty,
+  setPropertyListed,
   type OwnerPropertyResponse,
   type PropertyImageResponse,
 } from "../services/ownerPropertyService";
@@ -26,8 +31,9 @@ import {
 } from "../services/reviewService";
 
 import OwnerNavbar from "../components/OwnerNavbar";
+import ErrorPopup from "../components/ErrorPopup";
 
-const API_BASE_URL = "http://localhost:8080";
+import { API_BASE_URL } from "../config";
 
 function OwnerProperties() {
   const navigate = useNavigate();
@@ -136,8 +142,49 @@ function OwnerProperties() {
     loadProperties();
   }, [location.state?.refreshReviews]);
 
+  const handleToggleListed = async (
+    propertyId: number,
+    listed: boolean
+  ) => {
+    const confirmed = await showConfirm(
+      listed
+        ? "Hide this property? It will no longer appear in search and cannot receive new bookings. Existing bookings are not affected. You can show it again at any time."
+        : "Show this property in search again?",
+      {
+        title: listed ? "Hide property" : "Show property",
+        confirmLabel: listed ? "Hide" : "Show",
+      }
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const updated = await setPropertyListed(
+        propertyId,
+        !listed
+      );
+
+      setProperties((current) =>
+        current.map((property) =>
+          property.id === propertyId
+            ? { ...property, listed: updated.listed }
+            : property
+        )
+      );
+    } catch (err) {
+      await showAlert(
+        err instanceof Error
+          ? err.message
+          : "Failed to update the property.",
+        { tone: "error" }
+      );
+    }
+  };
+
   const handleDelete = async (propertyId: number) => {
-    const confirmed = window.confirm(
+    const confirmed = await showConfirm(
       "Are you sure you want to delete this property?"
     );
 
@@ -166,11 +213,17 @@ function OwnerProperties() {
         return updatedReviews;
       });
     } catch (err) {
-      setError(
+      const message =
         err instanceof Error
           ? err.message
-          : "Failed to delete property."
-      );
+          : "Failed to delete property.";
+
+      setError(message);
+
+      void showAlert(message, {
+        tone: "error",
+        title: "Couldn't delete property",
+      });
     }
   };
 
@@ -225,11 +278,32 @@ function OwnerProperties() {
 
       {/* Content */}
       <main className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
-        {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-            {error}
+        <ErrorPopup message={error} onClose={() => setError("")} />
+
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-coral)]">
+              Owner dashboard
+            </p>
+
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--color-navy)] sm:text-4xl">
+              My properties
+            </h1>
+
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
+              Manage your listings, rooms and visibility in search.
+            </p>
           </div>
-        )}
+
+          <button
+            type="button"
+            onClick={() => navigate("/owner/properties/new")}
+            className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--color-coral)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90"
+          >
+            <Plus size={16} />
+            Add property
+          </button>
+        </div>
 
         {loading ? (
           <div className="flex min-h-64 items-center justify-center">
@@ -307,6 +381,12 @@ function OwnerProperties() {
                           className="text-[var(--color-coral)]"
                         />
                       </div>
+                    )}
+
+                    {property.listed === false && (
+                      <span className="absolute left-3 top-3 rounded-full bg-gray-800/80 px-3 py-1 text-xs font-semibold text-white shadow-sm">
+                        Hidden
+                      </span>
                     )}
 
                     {/* Verification Badge */}
@@ -454,6 +534,29 @@ function OwnerProperties() {
                         Delete
                       </button>
                     </div>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleToggleListed(
+                          property.id,
+                          property.listed !== false
+                        )
+                      }
+                      className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--color-border)] px-3 py-2.5 text-xs font-semibold text-[var(--color-navy)] transition hover:border-[var(--color-coral)] hover:text-[var(--color-coral)]"
+                    >
+                      {property.listed === false ? (
+                        <>
+                          <Eye size={14} />
+                          Show in search
+                        </>
+                      ) : (
+                        <>
+                          <EyeOff size={14} />
+                          Hide from search
+                        </>
+                      )}
+                    </button>
                   </div>
                 </div>
               );

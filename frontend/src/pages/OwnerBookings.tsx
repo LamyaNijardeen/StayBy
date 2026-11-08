@@ -19,6 +19,7 @@ import {
   rejectBooking,
   type OwnerBookingResponse,
 } from "../services/ownerBookingService";
+import ErrorPopup from "../components/ErrorPopup";
 
 function OwnerBookings() {
   const navigate = useNavigate();
@@ -385,11 +386,7 @@ function OwnerBookings() {
             ERROR
         ==================================================== */}
 
-        {error && (
-          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-            {error}
-          </div>
-        )}
+        <ErrorPopup message={selectedRejectBooking ? "" : error} onClose={() => setError("")} />
 
         {/* ===================================================
             FILTERS
@@ -660,7 +657,7 @@ function OwnerBookings() {
                             BOOKING DETAILS
                         ====================================== */}
 
-                        <div className="mt-5 grid gap-4 sm:grid-cols-3 sm:gap-5">
+                        <div className="mt-5 grid grid-cols-3 gap-3 sm:gap-5">
 
                           {/* CHECK-IN */}
 

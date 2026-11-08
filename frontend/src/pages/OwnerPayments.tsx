@@ -20,7 +20,7 @@ import {
   type OwnerPendingPayment,
 } from "../services/paymentService";
 
-const API_BASE_URL = "http://localhost:8080";
+import { API_BASE_URL } from "../config";
 
 function OwnerPayments() {
   const navigate = useNavigate();
@@ -349,7 +349,7 @@ function OwnerPayments() {
     <div className="min-h-screen bg-[var(--color-background)]">
       <OwnerNavbar />
 
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-6 py-10 lg:px-8">
 
         {/* =================================================
             HEADER
@@ -369,11 +369,15 @@ function OwnerPayments() {
               Back
             </button>
 
-            <h1 className="text-2xl font-bold tracking-tight text-[var(--color-navy)] sm:text-3xl">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-coral)]">
+              Owner dashboard
+            </p>
+
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--color-navy)] sm:text-4xl">
               Payment Verification
             </h1>
 
-            <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
               Review and verify bank transfer
               payments submitted by travelers.
             </p>
@@ -441,7 +445,7 @@ function OwnerPayments() {
         ================================================= */}
 
         {!loading && (
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className="mb-6 grid grid-cols-2 gap-3 sm:gap-4">
 
             <div className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
               <div className="flex items-center gap-3">

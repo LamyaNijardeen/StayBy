@@ -1,0 +1,359 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Length 2740 >>
+stream
+BT
+/F1 8 Tf
+38 770 Td
+10 TL
+(PROJECT STRUCTURE REPORT) Tj T*
+(StayBy - accommodation booking application) Tj T*
+(Generated: 2026-10-23 14:21) Tj T*
+() Tj T*
+(1. PROJECT OVERVIEW) Tj T*
+(StayBy is organized as a full-stack application:) Tj T*
+(  Backend: Spring Boot REST API in Java, with JPA, PostgreSQL, Spring Security/JWT,) Tj T*
+(           email, PayHere payments, image uploads, and PDF receipt/refund services.) Tj T*
+(  Frontend: React and TypeScript application built with Vite, Tailwind CSS, Leaflet,) Tj T*
+(            React Router, and Lucide icons.) Tj T*
+() Tj T*
+(2. TECHNOLOGY SUMMARY) Tj T*
+(  Backend build: Maven Wrapper \(backend/mvnw and backend/mvnw.cmd\)) Tj T*
+(  Backend runtime: Java 21; Spring Boot 4.1.1) Tj T*
+(  Database: PostgreSQL via Spring Data JPA/Hibernate) Tj T*
+(  Frontend package manager/build: npm and Vite) Tj T*
+(  Frontend runtime: React ^19.2.8) Tj T*
+(  Authentication: Spring Security resource server and JWT service) Tj T*
+(  Payments: PayHere integration) Tj T*
+() Tj T*
+(3. BACKEND ORGANIZATION) Tj T*
+(  config/       Web and application configuration) Tj T*
+(  controller/   HTTP REST endpoints grouped by business capability) Tj T*
+(  dto/          Request and response transfer objects) Tj T*
+(  entity/       JPA persistence entities and status/role enums) Tj T*
+(  repository/   Spring Data repository interfaces) Tj T*
+(  security/     JWT and Spring Security configuration) Tj T*
+(  service/      Business logic, scheduling, mail, payment, image, and PDF services) Tj T*
+(  resources/    application.properties and runtime configuration) Tj T*
+(  test/         Backend application tests) Tj T*
+() Tj T*
+(4. FRONTEND ORGANIZATION) Tj T*
+(  components/   Shared navigation, landing-page, and reusable UI components) Tj T*
+(  pages/        Traveler, owner, and administrator screens) Tj T*
+(  services/     HTTP/API service modules by domain) Tj T*
+(  assets/       Bundled images and SVG assets) Tj T*
+(  public/       Public favicon and icon resources) Tj T*
+(  App.tsx       Application routes and top-level composition) Tj T*
+(  main.tsx      Browser entry point) Tj T*
+() Tj T*
+(5. CONFIGURATION AND DATA SAFETY) Tj T*
+(  Environment-specific secrets are referenced through backend/.env and ${...} placeholders.) Tj T*
+(  Secret values and passwords are not included in this report.) Tj T*
+(  Uploaded images, dependency installations, and compiled build output are summarized) Tj T*
+(  rather than embedded in the PDF.) Tj T*
+() Tj T*
+(6. COMPLETE DIRECTORY TREE) Tj T*
+() Tj T*
+(File-count notes:) Tj T*
+(  tracked/application file: 168) Tj T*
+() Tj T*
+(StayBy/) Tj T*
+() Tj T*
+(.github/) Tj T*
+(.vscode/) Tj T*
+(  settings.json) Tj T*
+(  tasks.json) Tj T*
+(backend/) Tj T*
+ET
+endstream
+endobj
+2 0 obj
+<< /Type /Page /Parent 11 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 13 0 R >> >> /Contents 1 0 R >>
+endobj
+3 0 obj
+<< /Length 1418 >>
+stream
+BT
+/F1 8 Tf
+38 770 Td
+10 TL
+(  .env) Tj T*
+(  .gitattributes) Tj T*
+(  .gitignore) Tj T*
+(  HELP.md) Tj T*
+(  mvnw) Tj T*
+(  mvnw.cmd) Tj T*
+(  pom.xml) Tj T*
+(frontend/) Tj T*
+(  .gitignore) Tj T*
+(  README.md) Tj T*
+(  eslint.config.js) Tj T*
+(  index.html) Tj T*
+(  package-lock.json) Tj T*
+(  package.json) Tj T*
+(  tsconfig.app.json) Tj T*
+(  tsconfig.json) Tj T*
+(  tsconfig.node.json) Tj T*
+(  vite.config.ts) Tj T*
+(  modernize/) Tj T*
+(  .mvn/) Tj T*
+(  src/) Tj T*
+(  uploads/) Tj T*
+(  public/) Tj T*
+(    favicon.svg) Tj T*
+(    icons.svg) Tj T*
+(  src/) Tj T*
+(    .gitignore) Tj T*
+(    App.css) Tj T*
+(    App.tsx) Tj T*
+(    index.css) Tj T*
+(    main.tsx) Tj T*
+(    java-upgrade/) Tj T*
+(      .gitignore) Tj T*
+(    wrapper/) Tj T*
+(      maven-wrapper.properties) Tj T*
+(    main/) Tj T*
+(    test/) Tj T*
+(    assets/) Tj T*
+(      hero.png) Tj T*
+(      react.svg) Tj T*
+(      vite.svg) Tj T*
+(    components/) Tj T*
+(      AdminNavbar.tsx) Tj T*
+(      FeaturedStays.tsx) Tj T*
+(      Footer.tsx) Tj T*
+(      Hero.tsx) Tj T*
+(      HowItWorks.tsx) Tj T*
+(      Navbar.tsx) Tj T*
+(      OwnerNavbar.tsx) Tj T*
+(      PopularDestinations.tsx) Tj T*
+(      SocialImpact.tsx) Tj T*
+(      TravelerNavbar.tsx) Tj T*
+(      WhyStayBy.tsx) Tj T*
+(    pages/) Tj T*
+(      AdminBookings.tsx) Tj T*
+(      AdminComplaints.tsx) Tj T*
+(      AdminDashboard.tsx) Tj T*
+(      AdminProperties.tsx) Tj T*
+ET
+endstream
+endobj
+4 0 obj
+<< /Type /Page /Parent 11 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 13 0 R >> >> /Contents 3 0 R >>
+endobj
+5 0 obj
+<< /Length 1805 >>
+stream
+BT
+/F1 8 Tf
+38 770 Td
+10 TL
+(      AdminReviews.tsx) Tj T*
+(      AdminUsers.tsx) Tj T*
+(      Booking.tsx) Tj T*
+(      BookingDetails.tsx) Tj T*
+(      Complaints.tsx) Tj T*
+(      Favorites.tsx) Tj T*
+(      Home.tsx) Tj T*
+(      Login.tsx) Tj T*
+(      MyBookings.tsx) Tj T*
+(      OwnerAddProperty.tsx) Tj T*
+(      OwnerBookingDetails.tsx) Tj T*
+(      OwnerBookings.tsx) Tj T*
+(      OwnerDashboard.tsx) Tj T*
+(      OwnerEditProperty.tsx) Tj T*
+(      OwnerPayments.tsx) Tj T*
+(      OwnerProfile.tsx) Tj T*
+(      OwnerProperties.tsx) Tj T*
+(      OwnerRefunds.tsx) Tj T*
+(      OwnerRooms.tsx) Tj T*
+(      Profile.tsx) Tj T*
+(      PropertyDetails.tsx) Tj T*
+(      Register.tsx) Tj T*
+(      SearchResults.tsx) Tj T*
+(      VerifyEmail.tsx) Tj T*
+(    services/) Tj T*
+(      adminService.ts) Tj T*
+(      bookingService.ts) Tj T*
+(      complaintService.ts) Tj T*
+(      notificationService.ts) Tj T*
+(      ownerBookingService.ts) Tj T*
+(      ownerPropertyService.ts) Tj T*
+(      ownerRoomService.ts) Tj T*
+(      paymentService.ts) Tj T*
+(      propertyService.ts) Tj T*
+(      refundService.ts) Tj T*
+(      reviewService.ts) Tj T*
+(      userService.ts) Tj T*
+(      hooks/) Tj T*
+(      java/) Tj T*
+(      resources/) Tj T*
+(        application.properties) Tj T*
+(      java/) Tj T*
+(        scripts/) Tj T*
+(          recordToolUse.ps1) Tj T*
+(          recordToolUse.sh) Tj T*
+(        com/) Tj T*
+(        static/) Tj T*
+(        templates/) Tj T*
+(        com/) Tj T*
+(          stayby/) Tj T*
+(          stayby/) Tj T*
+(            backend/) Tj T*
+(              StayByApplication.java) Tj T*
+(            backend/) Tj T*
+(              BackendApplicationTests.java) Tj T*
+(              config/) Tj T*
+(                WebConfig.java) Tj T*
+(              controller/) Tj T*
+ET
+endstream
+endobj
+6 0 obj
+<< /Type /Page /Parent 11 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 13 0 R >> >> /Contents 5 0 R >>
+endobj
+7 0 obj
+<< /Length 2597 >>
+stream
+BT
+/F1 8 Tf
+38 770 Td
+10 TL
+(                AdminController.java) Tj T*
+(                AuthController.java) Tj T*
+(                BookingController.java) Tj T*
+(                ComplaintController.java) Tj T*
+(                FavoriteController.java) Tj T*
+(                NotificationController.java) Tj T*
+(                OwnerPaymentController.java) Tj T*
+(                PayHereController.java) Tj T*
+(                PaymentReceiptController.java) Tj T*
+(                PropertyController.java) Tj T*
+(                PropertyImageController.java) Tj T*
+(                RefundController.java) Tj T*
+(                ReviewController.java) Tj T*
+(                RoomController.java) Tj T*
+(                RoomImageController.java) Tj T*
+(                TravelerPaymentController.java) Tj T*
+(                UserController.java) Tj T*
+(              dto/) Tj T*
+(                AuthResponse.java) Tj T*
+(                BookingResponse.java) Tj T*
+(                LoginRequest.java) Tj T*
+(                NotificationResponse.java) Tj T*
+(                PropertyImageResponse.java) Tj T*
+(                PropertyOwnerResponse.java) Tj T*
+(                PropertyResponse.java) Tj T*
+(                PropertySearchResponse.java) Tj T*
+(                RegisterRequest.java) Tj T*
+(                ReviewResponse.java) Tj T*
+(                RoomImageResponse.java) Tj T*
+(                RoomResponse.java) Tj T*
+(              entity/) Tj T*
+(                Booking.java) Tj T*
+(                BookingStatus.java) Tj T*
+(                Complaint.java) Tj T*
+(                ComplaintStatus.java) Tj T*
+(                Favorite.java) Tj T*
+(                Notification.java) Tj T*
+(                Payment.java) Tj T*
+(                PaymentStatus.java) Tj T*
+(                Property.java) Tj T*
+(                PropertyImage.java) Tj T*
+(                Refund.java) Tj T*
+(                RefundStatus.java) Tj T*
+(                Review.java) Tj T*
+(                Role.java) Tj T*
+(                Room.java) Tj T*
+(                RoomImage.java) Tj T*
+(                User.java) Tj T*
+(              repository/) Tj T*
+(                BookingRepository.java) Tj T*
+(                ComplaintRepository.java) Tj T*
+(                FavoriteRepository.java) Tj T*
+(                NotificationRepository.java) Tj T*
+(                PaymentRepository.java) Tj T*
+(                PropertyImageRepository.java) Tj T*
+(                PropertyRepository.java) Tj T*
+(                RefundRepository.java) Tj T*
+(                ReviewRepository.java) Tj T*
+ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 11 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 13 0 R >> >> /Contents 7 0 R >>
+endobj
+9 0 obj
+<< /Length 1440 >>
+stream
+BT
+/F1 8 Tf
+38 770 Td
+10 TL
+(                RoomImageRepository.java) Tj T*
+(                RoomRepository.java) Tj T*
+(                UserRepository.java) Tj T*
+(              security/) Tj T*
+(                JwtService.java) Tj T*
+(                SecurityConfig.java) Tj T*
+(              service/) Tj T*
+(                AdminService.java) Tj T*
+(                AuthService.java) Tj T*
+(                BookingCompletionScheduler.java) Tj T*
+(                BookingService.java) Tj T*
+(                ComplaintService.java) Tj T*
+(                EmailService.java) Tj T*
+(                FavoriteService.java) Tj T*
+(                NotificationService.java) Tj T*
+(                PayHereService.java) Tj T*
+(                PaymentReceiptService.java) Tj T*
+(                PropertyImageService.java) Tj T*
+(                PropertyService.java) Tj T*
+(                RefundService.java) Tj T*
+(                RefundSlipService.java) Tj T*
+(                ReviewService.java) Tj T*
+(                RoomImageService.java) Tj T*
+(                RoomService.java) Tj T*
+() Tj T*
+([Directory contents intentionally summarized]) Tj T*
+(  node_modules/       JavaScript dependency installation) Tj T*
+(  backend/target/     Maven compiled classes, JARs, and test reports) Tj T*
+(  frontend/dist/      Vite production build output) Tj T*
+(  backend/uploads/    Runtime-uploaded images; filenames are not expanded here) Tj T*
+ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 11 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 13 0 R >> >> /Contents 9 0 R >>
+endobj
+11 0 obj
+<< /Type /Pages /Kids [2 0 R 4 0 R 6 0 R 8 0 R 10 0 R] /Count 5 >>
+endobj
+12 0 obj
+<< /Type /Catalog /Pages 11 0 R >>
+endobj
+13 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier >>
+endobj
+xref
+0 14
+0000000000 65535 f 
+0000000015 00000 n 
+0000002807 00000 n 
+0000002935 00000 n 
+0000004405 00000 n 
+0000004533 00000 n 
+0000006390 00000 n 
+0000006518 00000 n 
+0000009167 00000 n 
+0000009295 00000 n 
+0000010787 00000 n 
+0000010916 00000 n 
+0000010999 00000 n 
+0000011050 00000 n 
+trailer
+<< /Size 14 /Root 12 0 R >>
+startxref
+11119
+%%EOF

@@ -26,6 +26,7 @@ public class BookingController {
     // CREATE BOOKING
     // =========================================================
 
+    @PreAuthorize("hasRole('TRAVELER')")
     @PostMapping("/room/{roomId}")
     public ResponseEntity<?> createBooking(
             @PathVariable Long roomId,
@@ -70,6 +71,7 @@ public class BookingController {
     // GET MY BOOKINGS
     // =========================================================
 
+    @PreAuthorize("hasRole('TRAVELER')")
     @GetMapping("/my")
     public ResponseEntity<List<BookingResponse>> getMyBookings(
             Authentication authentication
@@ -126,6 +128,7 @@ public class BookingController {
     // OWNER - GET SINGLE BOOKING
     // =========================================================
 
+    @PreAuthorize("hasRole('OWNER')")
     @GetMapping("/owner/{id}")
     public ResponseEntity<?> getOwnerBooking(
             @PathVariable Long id,
@@ -194,6 +197,7 @@ public class BookingController {
     // OWNER - GET BOOKINGS
     // =========================================================
 
+    @PreAuthorize("hasRole('OWNER')")
     @GetMapping("/owner")
     public ResponseEntity<List<BookingResponse>> getOwnerBookings(
             Authentication authentication
@@ -216,6 +220,7 @@ public class BookingController {
     // OWNER - CONFIRM BOOKING
     // =========================================================
 
+    @PreAuthorize("hasRole('OWNER')")
     @PutMapping("/{id}/confirm")
     public ResponseEntity<?> confirmBooking(
             @PathVariable Long id,
@@ -250,6 +255,7 @@ public class BookingController {
     // OWNER - REJECT BOOKING
     // =========================================================
 
+    @PreAuthorize("hasRole('OWNER')")
     @PutMapping("/{id}/reject")
     public ResponseEntity<?> rejectBooking(
             @PathVariable Long id,

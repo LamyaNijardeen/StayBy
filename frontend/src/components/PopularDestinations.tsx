@@ -1,3 +1,4 @@
+import SectionDecor from "./SectionDecor";
 import {
   ArrowRight,
   Loader2,
@@ -5,6 +6,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Reveal from "./Reveal";
 
 import {
   getAllProperties,
@@ -142,12 +144,14 @@ function PopularDestinations() {
   return (
     <section
       id="explore"
-      className="border-t border-[var(--color-border)] bg-[var(--color-surface)]"
+      className="relative overflow-hidden border-t border-[var(--color-border)] bg-gradient-to-b from-[#FFF1E8] via-white to-[#F3FAF8]"
     >
-      <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24">
+      <SectionDecor tone="warm" />
+
+      <div className="relative mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24">
 
         {/* Section heading */}
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <Reveal className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-coral)]">
               Explore
@@ -171,7 +175,7 @@ function PopularDestinations() {
             Explore all
             <ArrowRight size={17} />
           </button>
-        </div>
+        </Reveal>
 
         {/* Loading */}
         {loading && (
@@ -201,7 +205,10 @@ function PopularDestinations() {
         {/* Destination cards */}
         {!loading &&
           destinations.length > 0 && (
-            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <Reveal
+              stagger
+              className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4"
+            >
               {destinations.map(
                 (destination) => (
                   <article
@@ -257,7 +264,7 @@ function PopularDestinations() {
                   </article>
                 )
               )}
-            </div>
+            </Reveal>
           )}
 
       </div>
@@ -266,4 +273,3 @@ function PopularDestinations() {
 }
 
 export default PopularDestinations;
-

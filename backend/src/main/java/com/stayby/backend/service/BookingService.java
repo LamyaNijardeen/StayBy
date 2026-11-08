@@ -29,6 +29,18 @@ public class BookingService {
         private final NotificationService notificationService;
         private final EmailService emailService;
 
+        /*
+         * Booking statuses that keep a room reserved.
+         *
+         * AWAITING_PAYMENT must be included: the owner has already
+         * approved the booking and the traveler is paying for it.
+         * REJECTED, CANCELLED and COMPLETED bookings do NOT block a room.
+         */
+        public static final List<BookingStatus> BLOCKING_STATUSES = List.of(
+                        BookingStatus.PENDING,
+                        BookingStatus.AWAITING_PAYMENT,
+                        BookingStatus.CONFIRMED);
+
         public BookingService(
                         BookingRepository bookingRepository,
                         RoomRepository roomRepository,
@@ -92,7 +104,8 @@ public class BookingService {
                 // PROPERTY VERIFICATION CHECK
                 // =========================================================
 
-                if (!room.getProperty().isVerified()) {
+                if (!room.getProperty().isVerified()
+                                || !room.getProperty().isListed()) {
 
                         throw new IllegalArgumentException(
                                         "This property is not available for booking");
@@ -115,21 +128,17 @@ public class BookingService {
                  * existing.checkIn < requested.checkOut
                  * AND
                  * existing.checkOut > requested.checkIn
-                 */
-                List<Booking> overlappingBookings = bookingRepository.findOverlappingBookings(
-                                roomId,
-                                checkIn,
-                                checkOut);
-
-                /*
-                 * Only PENDING and CONFIRMED bookings block the room.
                  *
-                 * REJECTED and CANCELLED bookings do NOT block the room.
+                 * Only PENDING, AWAITING_PAYMENT and CONFIRMED bookings
+                 * block the room (see BLOCKING_STATUSES).
                  */
-                boolean hasActiveOverlap = overlappingBookings
-                                .stream()
-                                .anyMatch(booking -> booking.getStatus() == BookingStatus.PENDING
-                                                || booking.getStatus() == BookingStatus.CONFIRMED);
+                boolean hasActiveOverlap = !bookingRepository
+                                .findOverlappingBookingsByStatus(
+                                                roomId,
+                                                checkIn,
+                                                checkOut,
+                                                BLOCKING_STATUSES)
+                                .isEmpty();
 
                 if (hasActiveOverlap) {
                         throw new IllegalArgumentException(
@@ -235,6 +244,18 @@ public Booking cancelBooking(
                         paymentRepository
                                         .findByBookingId(bookingId)
                                         .orElse(null);
+
+        // An unpaid payment (waiting for approval, or awaiting a
+        // PayHere result) can no longer be approved once the
+        // booking is cancelled.
+        if (payment != null
+                        && payment.getStatus() == PaymentStatus.PENDING) {
+
+                payment.setStatus(PaymentStatus.FAILED);
+                payment.setRejectionReason("Booking was cancelled");
+
+                paymentRepository.save(payment);
+        }
 
         if (payment != null
                         && payment.getStatus() == PaymentStatus.PAID
@@ -367,19 +388,15 @@ public Booking cancelBooking(
                 // checkIn and checkOut must NOT be reversed.
                 // -----------------------------------------------------
 
-                List<Booking> overlappingBookings = bookingRepository.findOverlappingBookings(
-                                booking.getRoom().getId(),
-                                booking.getCheckIn(),
-                                booking.getCheckOut());
-
-                boolean hasAnotherActiveBooking = overlappingBookings
+                boolean hasAnotherActiveBooking = bookingRepository
+                                .findOverlappingBookingsByStatus(
+                                                booking.getRoom().getId(),
+                                                booking.getCheckIn(),
+                                                booking.getCheckOut(),
+                                                BLOCKING_STATUSES)
                                 .stream()
                                 .anyMatch(otherBooking -> !otherBooking.getId()
-                                                .equals(booking.getId())
-                                                &&
-                                                (otherBooking.getStatus() == BookingStatus.PENDING
-                                                                ||
-                                                                otherBooking.getStatus() == BookingStatus.CONFIRMED));
+                                                .equals(booking.getId()));
 
                 if (hasAnotherActiveBooking) {
                         throw new IllegalArgumentException(

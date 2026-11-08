@@ -1,3 +1,4 @@
+import { apiError } from "./apiError";
 export interface BookingResponse {
   id: number;
   roomId: number;
@@ -19,7 +20,7 @@ export interface BookingResponse {
   rejectionReason?: string | null;
 }
 
-const API_BASE_URL = "http://localhost:8080";
+import { API_BASE_URL } from "../config";
 
 export async function createBooking(
   roomId: number,
@@ -52,11 +53,7 @@ export async function createBooking(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to create booking"
-    );
+    throw await apiError(response, "Failed to create booking");
   }
 
   return response.json();
@@ -80,11 +77,7 @@ export async function getMyBookings(): Promise<BookingResponse[]> {
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to fetch your bookings"
-    );
+    throw await apiError(response, "Failed to fetch your bookings");
   }
 
   return response.json();
@@ -110,11 +103,7 @@ export async function cancelBooking(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to cancel booking."
-    );
+    throw await apiError(response, "Failed to cancel booking.");
   }
 
   return response.json();
@@ -140,11 +129,7 @@ export async function getBooking(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load booking details."
-    );
+    throw await apiError(response, "Failed to load booking details.");
   }
 
   return response.json();

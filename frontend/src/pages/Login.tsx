@@ -1,7 +1,10 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { ArrowLeft, Eye, EyeOff, MapPin } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+
+import AuthShell from "../components/AuthShell";
+import { API_BASE_URL } from "../config";
 
 function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -20,7 +23,7 @@ function Login() {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/api/auth/login",
+        `${API_BASE_URL}/api/auth/login`,
         {
           method: "POST",
           headers: {
@@ -106,40 +109,7 @@ if (data.role === "OWNER") {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)]">
-
-      {/* Top bar */}
-      <header className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
-
-          <Link
-            to="/"
-            className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)]"
-          >
-            <ArrowLeft size={17} />
-            Back
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <MapPin
-              size={20}
-              strokeWidth={2}
-              className="text-[var(--color-coral)]"
-            />
-
-            <span className="text-xl font-bold tracking-tight text-[var(--color-navy)]">
-              StayBy
-            </span>
-          </div>
-
-          <div className="w-14" />
-        </div>
-      </header>
-
-      {/* Login */}
-      <main className="flex min-h-[calc(100vh-81px)] items-center justify-center px-6 py-12">
-
-        <div className="w-full max-w-md">
+    <AuthShell backTo="/">
 
           {/* Heading */}
           <div className="text-center">
@@ -194,12 +164,12 @@ if (data.role === "OWNER") {
                     Password
                   </label>
 
-                  <button
-                    type="button"
+                  <Link
+                    to="/forgot-password"
                     className="text-xs font-semibold text-[var(--color-coral)] transition hover:text-[var(--color-navy)]"
                   >
                     Forgot password?
-                  </button>
+                  </Link>
                 </div>
 
                 <div className="relative mt-2">
@@ -263,10 +233,7 @@ if (data.role === "OWNER") {
 
           </div>
 
-        </div>
-
-      </main>
-    </div>
+    </AuthShell>
   );
 }
 

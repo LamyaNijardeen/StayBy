@@ -15,8 +15,10 @@ public class PropertyResponse {
     private Double latitude;
     private Double longitude;
     private boolean verified;
+    private boolean listed = true;
     private PropertyOwnerResponse owner;
     private Set<String> suitablePurposes;
+    private Set<String> amenities;
 
     public PropertyResponse() {
     }
@@ -32,8 +34,7 @@ public class PropertyResponse {
             Double longitude,
             boolean verified,
             PropertyOwnerResponse owner,
-            Set<String> suitablePurposes
-    ) {
+            Set<String> suitablePurposes) {
         this.id = id;
         this.name = name;
         this.description = description;
@@ -52,10 +53,10 @@ public class PropertyResponse {
         PropertyOwnerResponse owner = new PropertyOwnerResponse(
                 property.getOwner().getId(),
                 property.getOwner().getName(),
-                property.getOwner().getEmail()
-        );
+                property.getOwner().getEmail(),
+                property.getOwner().getPhone());
 
-        return new PropertyResponse(
+        PropertyResponse response = new PropertyResponse(
                 property.getId(),
                 property.getName(),
                 property.getDescription(),
@@ -66,8 +67,12 @@ public class PropertyResponse {
                 property.getLongitude(),
                 property.isVerified(),
                 owner,
-                property.getSuitablePurposes()
-        );
+                property.getSuitablePurposes());
+
+        response.setAmenities(property.getAmenities());
+        response.setListed(property.isListed());
+
+        return response;
     }
 
     public Long getId() {
@@ -106,6 +111,14 @@ public class PropertyResponse {
         return verified;
     }
 
+    public boolean isListed() {
+        return listed;
+    }
+
+    public void setListed(boolean listed) {
+        this.listed = listed;
+    }
+
     public PropertyOwnerResponse getOwner() {
         return owner;
     }
@@ -113,5 +126,12 @@ public class PropertyResponse {
     public Set<String> getSuitablePurposes() {
         return suitablePurposes;
     }
-}
 
+    public Set<String> getAmenities() {
+        return amenities;
+    }
+
+    public void setAmenities(Set<String> amenities) {
+        this.amenities = amenities;
+    }
+}

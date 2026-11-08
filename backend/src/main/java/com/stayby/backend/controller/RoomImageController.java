@@ -1,5 +1,6 @@
 package com.stayby.backend.controller;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.stayby.backend.dto.RoomImageResponse;
 import com.stayby.backend.entity.RoomImage;
 import com.stayby.backend.service.RoomImageService;
@@ -32,6 +33,7 @@ public class RoomImageController {
      * multipart/form-data
      * field name = "file"
      */
+    @PreAuthorize("hasRole('OWNER')")
     @PostMapping
     public ResponseEntity<?> uploadImage(
             @PathVariable Long roomId,
@@ -109,6 +111,7 @@ public class RoomImageController {
      *
      * DELETE /api/rooms/{roomId}/images/{imageId}
      */
+    @PreAuthorize("hasRole('OWNER')")
     @DeleteMapping("/{imageId}")
     public ResponseEntity<?> deleteImage(
             @PathVariable Long roomId,

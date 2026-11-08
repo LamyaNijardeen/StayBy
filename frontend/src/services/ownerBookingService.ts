@@ -1,3 +1,4 @@
+import { apiError } from "./apiError";
 export interface OwnerBookingResponse {
   id: number;
   roomId: number;
@@ -16,7 +17,7 @@ export interface OwnerBookingResponse {
   rejectionReason?: string | null;
 }
 
-const API_BASE_URL = "http://localhost:8080";
+import { API_BASE_URL } from "../config";
 
 export async function getOwnerBookings(): Promise<OwnerBookingResponse[]> {
   const token = localStorage.getItem("token");
@@ -36,11 +37,7 @@ export async function getOwnerBookings(): Promise<OwnerBookingResponse[]> {
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load owner bookings."
-    );
+    throw await apiError(response, "Failed to load owner bookings.");
   }
 
   return response.json();
@@ -66,11 +63,7 @@ export async function confirmBooking(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to confirm booking."
-    );
+    throw await apiError(response, "Failed to confirm booking.");
   }
 
   return response.json();
@@ -101,11 +94,7 @@ export async function rejectBooking(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to reject booking."
-    );
+    throw await apiError(response, "Failed to reject booking.");
   }
 
   return response.json();
@@ -130,11 +119,7 @@ export async function getOwnerBooking(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load booking details."
-    );
+    throw await apiError(response, "Failed to load booking details.");
   }
 
   return response.json();

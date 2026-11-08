@@ -1,8 +1,10 @@
 package com.stayby.backend.controller;
 
 import com.stayby.backend.dto.AuthResponse;
+import com.stayby.backend.dto.ForgotPasswordRequest;
 import com.stayby.backend.dto.LoginRequest;
 import com.stayby.backend.dto.RegisterRequest;
+import com.stayby.backend.dto.ResetPasswordRequest;
 import com.stayby.backend.entity.User;
 import com.stayby.backend.service.AuthService;
 import jakarta.validation.Valid;
@@ -112,6 +114,72 @@ public class AuthController {
     }
 
     // =========================================================
+    // FORGOT PASSWORD
+    // =========================================================
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request
+    ) {
+
+        try {
+
+            authService.requestPasswordReset(request.getEmail());
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "message",
+                            "A reset code has been sent to your email."
+                    )
+            );
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(e.getMessage());
+
+        } catch (IllegalStateException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(e.getMessage());
+        }
+    }
+
+    // =========================================================
+    // RESET PASSWORD
+    // =========================================================
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(
+            @Valid @RequestBody ResetPasswordRequest request
+    ) {
+
+        try {
+
+            authService.resetPassword(
+                    request.getEmail(),
+                    request.getCode(),
+                    request.getNewPassword()
+            );
+
+            return ResponseEntity.ok(
+                    Map.of(
+                            "message",
+                            "Your password has been updated. You can now sign in."
+                    )
+            );
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity
+                    .badRequest()
+                    .body(e.getMessage());
+        }
+    }
+
+    // =========================================================
     // LOGIN
     // =========================================================
 
@@ -133,30 +201,4 @@ public class AuthController {
                     .body(e.getMessage());
         }
     }
-
-    /*
-     * TEMPORARY DEVELOPMENT ENDPOINT
-     *
-     * Used only to reset the Test Owner password.
-     * Remove this endpoint after the owner login has been tested.
-     */
-    @PostMapping("/reset-owner-password")
-    public ResponseEntity<?> resetOwnerPassword() {
-
-        try {
-
-            authService.resetOwnerPassword();
-
-            return ResponseEntity.ok(
-                    "Owner password reset successfully"
-            );
-
-        } catch (IllegalArgumentException e) {
-
-            return ResponseEntity
-                    .badRequest()
-                    .body(e.getMessage());
-        }
-    }
 }
-

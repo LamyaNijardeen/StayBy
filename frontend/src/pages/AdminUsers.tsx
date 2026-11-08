@@ -6,13 +6,20 @@ import {
   ShieldCheck,
   Building2,
   CalendarDays,
+  CheckCircle2,
+  Clock3,
+  Mail,
+  Phone,
+  Ban,
 } from "lucide-react";
 
 import AdminNavbar from "../components/AdminNavbar";
 import {
   getAdminUsers,
+  setUserSuspended,
   type AdminUser,
 } from "../services/adminService";
+import { showAlert, showConfirm } from "../services/dialog";
 
 function AdminUsers() {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -45,6 +52,63 @@ function AdminUsers() {
 
     loadUsers();
   }, []);
+
+  async function handleToggleSuspend(user: AdminUser) {
+    const suspending = !user.suspended;
+
+    const ok = await showConfirm(
+      suspending
+        ? `Suspend ${user.name}? They will be signed out and unable to use StayBy until you restore the account.`
+        : `Restore access for ${user.name}?`,
+      {
+        title: suspending ? "Suspend account" : "Restore account",
+        tone: suspending ? "error" : "info",
+        confirmLabel: suspending ? "Suspend" : "Restore",
+      }
+    );
+
+    if (!ok) return;
+
+    try {
+      const updated = await setUserSuspended(user.id, suspending);
+
+      setUsers((current) =>
+        current.map((u) =>
+          u.id === user.id ? { ...u, ...updated } : u
+        )
+      );
+    } catch (err) {
+      await showAlert(
+        err instanceof Error
+          ? err.message
+          : "Failed to update the user.",
+        { tone: "error" }
+      );
+    }
+  }
+
+  const suspendButton = (user: AdminUser) =>
+    user.role === "ADMIN" ? null : (
+      <button
+        type="button"
+        onClick={() => handleToggleSuspend(user)}
+        className={
+          user.suspended
+            ? "rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 transition hover:bg-green-100"
+            : "rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-100"
+        }
+      >
+        {user.suspended ? "Restore" : "Suspend"}
+      </button>
+    );
+
+  const suspendedBadge = (user: AdminUser) =>
+    user.suspended ? (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">
+        <Ban size={13} />
+        Suspended
+      </span>
+    ) : null;
 
   const filteredUsers = useMemo(() => {
     return users.filter((user) => {
@@ -91,6 +155,19 @@ function AdminUsers() {
     );
   };
 
+  const getVerifiedBadge = (verified: boolean) =>
+    verified ? (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+        <CheckCircle2 size={13} />
+        Verified
+      </span>
+    ) : (
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
+        <Clock3 size={13} />
+        Not verified
+      </span>
+    );
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString(
       undefined,
@@ -124,7 +201,7 @@ function AdminUsers() {
         </div>
 
         {/* SUMMARY */}
-        <section className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
 
           <div className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
@@ -321,8 +398,9 @@ function AdminUsers() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[700px] text-left">
+            <>
+            <div className="hidden overflow-x-auto md:block">
+              <table className="w-full min-w-[900px] text-left">
                 <thead>
                   <tr className="border-b border-[var(--color-border)] bg-[#FAF9F6]">
                     <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
@@ -334,11 +412,23 @@ function AdminUsers() {
                     </th>
 
                     <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+                      Phone
+                    </th>
+
+                    <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
                       Role
                     </th>
 
                     <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+                      Email status
+                    </th>
+
+                    <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
                       Registered
+                    </th>
+
+                    <th className="px-6 py-3 text-xs font-semibold uppercase tracking-wide text-[var(--color-text-secondary)]">
+                      Action
                     </th>
                   </tr>
                 </thead>
@@ -374,8 +464,19 @@ function AdminUsers() {
                         {user.email}
                       </td>
 
+                      <td className="px-6 py-4 text-sm text-[var(--color-text-secondary)]">
+                        {user.phone || "—"}
+                      </td>
+
                       <td className="px-6 py-4">
                         {getRoleBadge(user.role)}
+                      </td>
+
+                      <td className="px-6 py-4">
+                        <div className="flex flex-wrap gap-1.5">
+                          {getVerifiedBadge(user.emailVerified)}
+                          {suspendedBadge(user)}
+                        </div>
                       </td>
 
                       <td className="px-6 py-4">
@@ -384,11 +485,72 @@ function AdminUsers() {
                           {formatDate(user.createdAt)}
                         </div>
                       </td>
+
+                      <td className="px-6 py-4">
+                        {suspendButton(user)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+
+            {/* PHONE / SMALL SCREENS: one card per user */}
+            <div className="divide-y divide-[var(--color-border)] md:hidden">
+              {filteredUsers.map((user) => (
+                <div key={user.id} className="space-y-2.5 px-4 py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[var(--color-coral-light)]">
+                        <User
+                          size={17}
+                          className="text-[var(--color-coral)]"
+                        />
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-[var(--color-navy)]">
+                          {user.name}
+                        </p>
+
+                        <p className="text-xs text-[var(--color-text-secondary)]">
+                          ID #{user.id}
+                        </p>
+                      </div>
+                    </div>
+
+                    {getRoleBadge(user.role)}
+                  </div>
+
+                  <p className="flex items-center gap-2 break-all text-xs text-[var(--color-text-secondary)]">
+                    <Mail size={14} className="shrink-0" />
+                    {user.email}
+                  </p>
+
+                  <p className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
+                    <Phone size={14} className="shrink-0" />
+                    {user.phone || "No phone number"}
+                  </p>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="flex flex-wrap gap-1.5">
+                      {getVerifiedBadge(user.emailVerified)}
+                      {suspendedBadge(user)}
+                    </div>
+
+                    <span className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]">
+                      <CalendarDays size={14} />
+                      {formatDate(user.createdAt)}
+                    </span>
+                  </div>
+
+                  {user.role !== "ADMIN" && (
+                    <div>{suspendButton(user)}</div>
+                  )}
+                </div>
+              ))}
+            </div>
+            </>
           )}
 
         </section>

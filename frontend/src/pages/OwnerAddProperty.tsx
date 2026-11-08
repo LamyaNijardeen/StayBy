@@ -6,6 +6,8 @@ import {
   ImagePlus,
   X,
   Check,
+  Wifi,
+  Sparkles,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -24,6 +26,7 @@ import {
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import ErrorPopup from "../components/ErrorPopup";
 
 const PURPOSE_OPTIONS = [
   "Medical Visit",
@@ -38,6 +41,21 @@ const PURPOSE_OPTIONS = [
   "Sports / Competition",
   "Festival / Celebration",
   "Other",
+];
+
+const AMENITY_OPTIONS = [
+  "Free Wi-Fi",
+  "Air conditioning",
+  "Private bathroom",
+  "Free parking",
+  "Kitchen",
+  "Workspace",
+  "Washing machine",
+  "Refrigerator",
+  "TV",
+  "Hot water",
+  "Balcony",
+  "Breakfast included",
 ];
 
 const DEFAULT_LOCATION: [number, number] = [
@@ -87,11 +105,8 @@ function LocationMarker({
       draggable
       eventHandlers={{
         dragend: (event) => {
-          const marker =
-            event.target as L.Marker;
-
-          const coordinates =
-            marker.getLatLng();
+          const marker = event.target as L.Marker;
+          const coordinates = marker.getLatLng();
 
           onPositionChange([
             coordinates.lat,
@@ -115,6 +130,7 @@ function OwnerAddProperty() {
     latitude: null,
     longitude: null,
     suitablePurposes: [],
+    amenities: [],
   });
 
   // Actual image files selected by the owner
@@ -143,13 +159,6 @@ function OwnerAddProperty() {
   ) => {
     const { name, value } = event.target;
 
-    setForm((current) => ({
-      ...current,
-      [name]: value,
-    }));
-
-    // If the owner changes the address/city after selecting
-    // a location, remove the previous selected coordinates.
     if (name === "address" || name === "city") {
       setMapPosition(null);
 
@@ -161,7 +170,13 @@ function OwnerAddProperty() {
       }));
 
       setLocationError("");
+      return;
     }
+
+    setForm((current) => ({
+      ...current,
+      [name]: value,
+    }));
   };
 
   const handlePurposeChange = (purpose: string) => {
@@ -173,13 +188,30 @@ function OwnerAddProperty() {
         ...current,
         suitablePurposes: alreadySelected
           ? current.suitablePurposes.filter(
-            (item) => item !== purpose
-          )
+              (item) => item !== purpose
+            )
           : [...current.suitablePurposes, purpose],
       };
     });
 
     setError("");
+  };
+
+  // Toggle an amenity on or off
+  const handleAmenityChange = (amenity: string) => {
+    setForm((current) => {
+      const alreadySelected =
+        current.amenities.includes(amenity);
+
+      return {
+        ...current,
+        amenities: alreadySelected
+          ? current.amenities.filter(
+              (item) => item !== amenity
+            )
+          : [...current.amenities, amenity],
+      };
+    });
   };
 
   const handleImageChange = (
@@ -219,12 +251,10 @@ function OwnerAddProperty() {
     ]);
 
     setError("");
-
     event.target.value = "";
   };
 
   const removeImage = (index: number) => {
-    // Release the preview URL
     URL.revokeObjectURL(images[index]);
 
     setImages((current) =>
@@ -266,9 +296,7 @@ function OwnerAddProperty() {
       );
 
       if (!response.ok) {
-        throw new Error(
-          "Unable to find this location."
-        );
+        throw new Error("Unable to find this location.");
       }
 
       const results = await response.json();
@@ -332,7 +360,6 @@ function OwnerAddProperty() {
     event: FormEvent<HTMLFormElement>
   ) => {
     event.preventDefault();
-
     setError("");
 
     if (!form.name.trim()) {
@@ -377,7 +404,7 @@ function OwnerAddProperty() {
 
       /*
        * STEP 1
-       * Create the property first.
+       * Create the property, including its selected amenities.
        */
       const createdProperty = await createProperty({
         ...form,
@@ -385,6 +412,8 @@ function OwnerAddProperty() {
         description: form.description.trim(),
         address: form.address.trim(),
         city: form.city.trim(),
+        suitablePurposes: [...form.suitablePurposes],
+        amenities: [...form.amenities],
       });
 
       /*
@@ -402,7 +431,7 @@ function OwnerAddProperty() {
 
       /*
        * STEP 3
-       * Continue directly to room setup for the new property.
+       * Continue directly to room setup.
        */
       navigate(
         `/owner/properties/${createdProperty.id}/rooms?setup=true`
@@ -420,10 +449,8 @@ function OwnerAddProperty() {
 
   return (
     <div className="min-h-screen bg-[var(--color-background)]">
-      {/* Main Navbar */}
       <OwnerNavbar />
 
-      {/* Main */}
       <main className="mx-auto max-w-3xl px-6 py-10 lg:px-8">
         {/* Heading */}
         <div>
@@ -453,13 +480,8 @@ function OwnerAddProperty() {
         </div>
 
         {/* Error */}
-        {error && (
-          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-            {error}
-          </div>
-        )}
+        <ErrorPopup message={error} onClose={() => setError("")} />
 
-        {/* Form */}
         <form
           onSubmit={handleSubmit}
           className="mt-8 space-y-6"
@@ -509,9 +531,7 @@ function OwnerAddProperty() {
                   required
                   className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 text-sm outline-none transition focus:border-[var(--color-coral)] focus:ring-2 focus:ring-[var(--color-coral-light)]"
                 >
-                  <option value="">
-                    Select property type
-                  </option>
+                  <option value="">Select property type</option>
                   <option value="HOTEL">Hotel</option>
                   <option value="GUESTHOUSE">Guesthouse</option>
                   <option value="VILLA">Villa</option>
@@ -564,10 +584,11 @@ function OwnerAddProperty() {
                 return (
                   <label
                     key={purpose}
-                    className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition ${selected
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition ${
+                      selected
                         ? "border-[var(--color-coral)] bg-[var(--color-coral-light)]"
                         : "border-[var(--color-border)] bg-[var(--color-background)] hover:border-[var(--color-coral)]"
-                      }`}
+                    }`}
                   >
                     <input
                       type="checkbox"
@@ -579,19 +600,21 @@ function OwnerAddProperty() {
                     />
 
                     <span
-                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${selected
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${
+                        selected
                           ? "border-[var(--color-coral)] bg-[var(--color-coral)] text-white"
                           : "border-[var(--color-border)] bg-[var(--color-surface)]"
-                        }`}
+                      }`}
                     >
                       {selected && <Check size={14} />}
                     </span>
 
                     <span
-                      className={`text-sm font-medium ${selected
+                      className={`text-sm font-medium ${
+                        selected
                           ? "text-[var(--color-navy)]"
                           : "text-[var(--color-text)]"
-                        }`}
+                      }`}
                     >
                       {purpose}
                     </span>
@@ -604,6 +627,87 @@ function OwnerAddProperty() {
               Choose all purposes that accurately describe the
               type of stay your property can accommodate.
             </p>
+          </section>
+
+          {/* Amenities */}
+          <section className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[var(--color-coral-light)]">
+                <Wifi
+                  size={19}
+                  className="text-[var(--color-coral)]"
+                />
+              </div>
+
+              <div>
+                <h2 className="text-lg font-semibold text-[var(--color-navy)]">
+                  What this property offers
+                </h2>
+
+                <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
+                  Select the amenities actually available at your
+                  property. You can choose more than one.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              {AMENITY_OPTIONS.map((amenity) => {
+                const selected =
+                  form.amenities.includes(amenity);
+
+                return (
+                  <label
+                    key={amenity}
+                    className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 transition ${
+                      selected
+                        ? "border-[var(--color-coral)] bg-[var(--color-coral-light)]"
+                        : "border-[var(--color-border)] bg-[var(--color-background)] hover:border-[var(--color-coral)]"
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selected}
+                      onChange={() =>
+                        handleAmenityChange(amenity)
+                      }
+                      className="sr-only"
+                    />
+
+                    <span
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition ${
+                        selected
+                          ? "border-[var(--color-coral)] bg-[var(--color-coral)] text-white"
+                          : "border-[var(--color-border)] bg-[var(--color-surface)]"
+                      }`}
+                    >
+                      {selected && <Check size={14} />}
+                    </span>
+
+                    <span
+                      className={`text-sm font-medium ${
+                        selected
+                          ? "text-[var(--color-navy)]"
+                          : "text-[var(--color-text)]"
+                      }`}
+                    >
+                      {amenity}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 flex items-start gap-2 text-xs leading-5 text-[var(--color-text-secondary)]">
+              <Sparkles
+                size={15}
+                className="mt-0.5 shrink-0 text-[var(--color-coral)]"
+              />
+              <p>
+                Only select amenities that guests can actually use
+                during their stay.
+              </p>
+            </div>
           </section>
 
           {/* Images */}
@@ -767,7 +871,6 @@ function OwnerAddProperty() {
                   className="inline-flex items-center justify-center gap-2 rounded-xl bg-[var(--color-navy)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-coral)] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <MapPin size={17} />
-
                   {locationLoading
                     ? "Finding location..."
                     : "Find location"}
@@ -780,7 +883,10 @@ function OwnerAddProperty() {
 
               {/* Location error */}
               {locationError && (
-                <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                <div
+                  role="alert"
+                  className="rounded-xl border border-red-200 bg-red-50 px-4 py-3"
+                >
                   <p className="text-sm text-red-600">
                     {locationError}
                   </p>
@@ -799,9 +905,7 @@ function OwnerAddProperty() {
 
                 <div className="overflow-hidden rounded-2xl border border-[var(--color-border)]">
                   <MapContainer
-                    center={
-                      mapPosition || DEFAULT_LOCATION
-                    }
+                    center={mapPosition || DEFAULT_LOCATION}
                     zoom={mapPosition ? 15 : 7}
                     scrollWheelZoom={true}
                     className="h-80 w-full"
@@ -813,15 +917,11 @@ function OwnerAddProperty() {
 
                     {mapPosition && (
                       <>
-                        <MapCenterUpdater
-                          position={mapPosition}
-                        />
+                        <MapCenterUpdater position={mapPosition} />
 
                         <LocationMarker
                           position={mapPosition}
-                          onPositionChange={
-                            handleMapPositionChange
-                          }
+                          onPositionChange={handleMapPositionChange}
                         />
                       </>
                     )}
@@ -856,9 +956,7 @@ function OwnerAddProperty() {
           <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
             <button
               type="button"
-              onClick={() =>
-                navigate("/owner/properties")
-              }
+              onClick={() => navigate("/owner/properties")}
               disabled={loading}
               className="rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-5 py-3 text-sm font-semibold text-[var(--color-navy)] transition hover:border-[var(--color-coral)] disabled:cursor-not-allowed disabled:opacity-60"
             >
@@ -884,4 +982,3 @@ function OwnerAddProperty() {
 }
 
 export default OwnerAddProperty;
-

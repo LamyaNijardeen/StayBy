@@ -1,9 +1,11 @@
+import { showAlert } from "../services/dialog";
 import { useEffect, useMemo, useState } from "react";
-import Navbar from "../components/Navbar";
-import TravelerNavbar from "../components/TravelerNavbar";
+import LandmarkSearchInput from "../components/LandmarkSearchInput";
+import RoleNavbar from "../components/RoleNavbar";
 import {
   ChevronDown,
   Heart,
+  Landmark,
   MapPin,
   Search,
   SlidersHorizontal,
@@ -26,6 +28,8 @@ import type {
   PropertySearchResponse,
 } from "../services/propertyService";
 
+import { formatLandmarkDistance } from "../services/landmarkService";
+
 const PURPOSE_OPTIONS = [
   "Medical Visit",
   "Education",
@@ -44,7 +48,6 @@ const PURPOSE_OPTIONS = [
 function SearchResults() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-const isLoggedIn = !!localStorage.getItem("token");
   const [properties, setProperties] = useState<PropertySearchResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -63,12 +66,14 @@ const isLoggedIn = !!localStorage.getItem("token");
   const checkOut = searchParams.get("checkOut") || "";
   const guests = Number(searchParams.get("guests") || "1");
   const purpose = searchParams.get("purpose") || "";
+  const landmark = searchParams.get("landmark") || "";
 
   const [searchCity, setSearchCity] = useState(city);
   const [searchCheckIn, setSearchCheckIn] = useState(checkIn);
   const [searchCheckOut, setSearchCheckOut] = useState(checkOut);
   const [searchGuests, setSearchGuests] = useState(guests);
   const [searchPurpose, setSearchPurpose] = useState(purpose);
+  const [searchLandmark, setSearchLandmark] = useState(landmark);
 
   /* =========================================================
      FILTERS / SORTING
@@ -112,12 +117,14 @@ const isLoggedIn = !!localStorage.getItem("token");
     setSearchCheckOut(checkOut);
     setSearchGuests(guests);
     setSearchPurpose(purpose);
+    setSearchLandmark(landmark);
   }, [
     city,
     checkIn,
     checkOut,
     guests,
     purpose,
+    landmark,
   ]);
 
   /* =========================================================
@@ -184,6 +191,10 @@ const isLoggedIn = !!localStorage.getItem("token");
       params.set("purpose", searchPurpose);
     }
 
+    if (searchLandmark.trim()) {
+      params.set("landmark", searchLandmark.trim());
+    }
+
     navigate(`/search?${params.toString()}`);
   };
 
@@ -197,18 +208,15 @@ const isLoggedIn = !!localStorage.getItem("token");
         setLoading(true);
         setError("");
 
-        if (!checkIn || !checkOut) {
-          setProperties([]);
-          return;
-        }
-
+        // Dates are optional: without them every stay is listed.
         const results = await searchAvailableProperties({
           city: city || undefined,
           propertyType: propertyType || undefined,
-          checkIn,
-          checkOut,
+          checkIn: checkIn && checkOut ? checkIn : undefined,
+          checkOut: checkIn && checkOut ? checkOut : undefined,
           guests,
           purpose: purpose || undefined,
+          landmark: landmark || undefined,
         });
 
         setProperties(results);
@@ -294,6 +302,7 @@ const isLoggedIn = !!localStorage.getItem("token");
     checkOut,
     guests,
     purpose,
+    landmark,
   ]);
 
   /* =========================================================
@@ -496,44 +505,81 @@ const isLoggedIn = !!localStorage.getItem("token");
       });
     }
     if (sortOption === "distance" && userLocation) {
-      results.sort((a, b) => {
-        if (
-          a.latitude === null ||
-          a.longitude === null
-        ) {
-          return 1;
-        }
+  results.sort((a, b) => {
+    const aHasCoordinates =
+      a.latitude != null && a.longitude != null;
 
-        if (
-          b.latitude === null ||
-          b.longitude === null
-        ) {
-          return -1;
-        }
+    const bHasCoordinates =
+      b.latitude != null && b.longitude != null;
 
-        const distanceA = calculateDistanceKm(
-          userLocation.latitude,
-          userLocation.longitude,
-          a.latitude,
-          a.longitude
-        );
-
-        const distanceB = calculateDistanceKm(
-          userLocation.latitude,
-          userLocation.longitude,
-          b.latitude,
-          b.longitude
-        );
-
-        return distanceA - distanceB;
-      });
+    // Put properties without coordinates last.
+    if (!aHasCoordinates && !bHasCoordinates) {
+      return 0;
     }
+
+    if (!aHasCoordinates) {
+      return 1;
+    }
+
+    if (!bHasCoordinates) {
+      return -1;
+    }
+
+    const distanceA = calculateDistanceKm(
+      userLocation.latitude,
+      userLocation.longitude,
+      a.latitude!,
+      a.longitude!
+    );
+
+    const distanceB = calculateDistanceKm(
+      userLocation.latitude,
+      userLocation.longitude,
+      b.latitude!,
+      b.longitude!
+    );
+
+    return distanceA - distanceB;
+  });
+}
     /* =====================================================
    RECOMMENDED
 ===================================================== */
 
     if (sortOption === "recommended") {
       results.sort((a, b) => {
+        // Stays near the searched landmark come first,
+        // the closest one at the top.
+        if (landmark) {
+          const aLandmarkDistance =
+            a.matchedLandmark?.distanceKm ?? null;
+
+          const bLandmarkDistance =
+            b.matchedLandmark?.distanceKm ?? null;
+
+          if (
+            aLandmarkDistance !== null &&
+            bLandmarkDistance === null
+          ) {
+            return -1;
+          }
+
+          if (
+            aLandmarkDistance === null &&
+            bLandmarkDistance !== null
+          ) {
+            return 1;
+          }
+
+          if (
+            aLandmarkDistance !== null &&
+            bLandmarkDistance !== null &&
+            aLandmarkDistance !== bLandmarkDistance
+          ) {
+            return aLandmarkDistance - bLandmarkDistance;
+          }
+        }
+
         // If a purpose is selected, prioritize properties
         // that are suitable for that purpose.
         if (purpose) {
@@ -614,7 +660,72 @@ const isLoggedIn = !!localStorage.getItem("token");
     sortOption,
     userLocation,
     purpose,
+    landmark,
   ]);
+
+  /* =========================================================
+     LANDMARK SECTIONS
+     Stays near the searched landmark are shown first. If there
+     are none, travelers are told and shown the other stays.
+  ========================================================= */
+
+  const hasCriteria = !!(city || purpose || landmark);
+  const hasDates = !!(checkIn && checkOut);
+
+  const hasRelevantMatches = properties.some(
+    (property) => property.relevant
+  );
+
+  const bestMatchCount = displayedProperties.filter(
+    (property) => property.relevant
+  ).length;
+
+  const bestTitle = landmark
+    ? `Stays near ${landmark}`
+    : "Best matches for your search";
+
+  const resultSections: {
+    key: string;
+    title: string | null;
+    subtitle: string | null;
+    items: PropertySearchResponse[];
+  }[] = hasCriteria
+    ? [
+      {
+        key: "best-matches",
+        title: bestTitle,
+        subtitle: landmark
+          ? "Closest to it first"
+          : "These match everything you searched for",
+        items: displayedProperties.filter(
+          (property) => property.relevant
+        ),
+      },
+      {
+        key: "other-stays",
+        title: hasRelevantMatches
+          ? "Other stays you might like"
+          : "Available stays",
+        subtitle: hasRelevantMatches
+          ? hasDates
+            ? "They don't match everything, but are available for your dates."
+            : "They don't match everything you searched for."
+          : null,
+        items: displayedProperties.filter(
+          (property) => !property.relevant
+        ),
+      },
+    ]
+    : [
+      {
+        key: "all",
+        title: "All stays",
+        subtitle: hasDates
+          ? "Available for your dates"
+          : "Add dates and details above to see the best matches first",
+        items: displayedProperties,
+      },
+    ];
 
   /* =========================================================
      APPLY FILTERS
@@ -709,7 +820,7 @@ const isLoggedIn = !!localStorage.getItem("token");
     } catch (err) {
       console.error("Failed to update favorite:", err);
 
-      alert(
+      showAlert(
         err instanceof Error
           ? err.message
           : "Failed to update favorite"
@@ -726,7 +837,7 @@ const isLoggedIn = !!localStorage.getItem("token");
           HEADER
       ===================================================== */}
 
-      {isLoggedIn ? <TravelerNavbar /> : <Navbar />}
+      <RoleNavbar />
 
       <main className="mx-auto max-w-7xl px-6 py-8 lg:px-8">
 
@@ -938,6 +1049,26 @@ const isLoggedIn = !!localStorage.getItem("token");
 
           </div>
 
+          {/* ===================================================
+              LANDMARK
+          =================================================== */}
+
+          <div className="mt-2 rounded-xl bg-[var(--color-background)] px-4 py-3">
+
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-[var(--color-text-secondary)]">
+              <Landmark size={13} className="text-[var(--color-coral)]" />
+              Staying near a specific place? (optional)
+            </label>
+
+            <LandmarkSearchInput
+              value={searchLandmark}
+              onChange={setSearchLandmark}
+              onEnter={handleSearch}
+              className="mt-1 w-full bg-transparent text-sm font-medium text-[var(--color-text)] outline-none placeholder:text-gray-400"
+            />
+
+          </div>
+
         </div>
 
         {/* ===================================================
@@ -957,11 +1088,29 @@ const isLoggedIn = !!localStorage.getItem("token");
             <h1 className="mt-1 text-2xl font-bold tracking-tight text-[var(--color-navy)] sm:text-3xl">
               {loading
                 ? "Finding stays..."
-                : `${displayedProperties.length} ${displayedProperties.length === 1
-                  ? "stay"
-                  : "stays"
-                } found`}
+                : hasCriteria && bestMatchCount > 0
+                  ? `${bestMatchCount} best ${bestMatchCount === 1
+                    ? "match"
+                    : "matches"
+                  }`
+                  : `${displayedProperties.length} ${displayedProperties.length === 1
+                    ? "stay"
+                    : "stays"
+                  } ${hasCriteria ? "available" : "found"}`}
             </h1>
+
+            {!loading &&
+              hasCriteria &&
+              bestMatchCount > 0 &&
+              displayedProperties.length > bestMatchCount && (
+                <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                  plus {displayedProperties.length - bestMatchCount} other{" "}
+                  {displayedProperties.length - bestMatchCount === 1
+                    ? "stay"
+                    : "stays"}{" "}
+                  you can book
+                </p>
+              )}
 
             {purpose && (
               <p className="mt-2 text-sm text-[var(--color-coral)]">
@@ -974,7 +1123,7 @@ const isLoggedIn = !!localStorage.getItem("token");
 
           </div>
 
-          <div className="relative flex gap-3">
+          <div className="relative flex flex-wrap gap-2 sm:gap-3 [&>button]:whitespace-nowrap">
             {/* =================================================
     NEAR ME
 ================================================= */}
@@ -1294,6 +1443,43 @@ const isLoggedIn = !!localStorage.getItem("token");
         )}
 
         {/* ===================================================
+            NO STAYS NEAR THE SEARCHED LANDMARK
+        =================================================== */}
+
+        {!loading &&
+          !error &&
+          hasCriteria &&
+          properties.length > 0 &&
+          !hasRelevantMatches && (
+            <div className="mt-8 flex items-start gap-3 rounded-2xl border border-[var(--color-coral)] bg-[var(--color-coral-light)] p-5">
+
+              <Landmark
+                size={22}
+                className="mt-0.5 shrink-0 text-[var(--color-coral)]"
+              />
+
+              <div>
+
+                <h2 className="font-semibold text-[var(--color-navy)]">
+                  {landmark
+                    ? `No similar stays found near “${landmark}”`
+                    : "No stays match everything you searched for"}
+                </h2>
+
+                <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                  {landmark
+                    ? "None of our stays are listed close to this place. "
+                    : "Nothing fits all of your choices exactly. "}
+                  Here are the other stays you can book
+                  {hasDates ? " for your dates" : ""}.
+                </p>
+
+              </div>
+
+            </div>
+          )}
+
+        {/* ===================================================
             EMPTY
         =================================================== */}
 
@@ -1326,9 +1512,31 @@ const isLoggedIn = !!localStorage.getItem("token");
         {!loading &&
           !error &&
           displayedProperties.length > 0 && (
-            <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
 
-              {displayedProperties.map((property) => {
+              {resultSections.map((section) =>
+                section.items.length === 0 ? null : (
+                  <div key={section.key} className="mt-8">
+
+                    {section.title && (
+                      <div className="mb-4">
+
+                        <h2 className="text-lg font-bold text-[var(--color-navy)]">
+                          {section.title}
+                        </h2>
+
+                        {section.subtitle && (
+                          <p className="mt-0.5 text-sm text-[var(--color-text-secondary)]">
+                            {section.subtitle}
+                          </p>
+                        )}
+
+                      </div>
+                    )}
+
+                    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+
+              {section.items.map((property) => {
 
                 const cheapestRoom =
                   property.availableRooms.length > 0
@@ -1361,6 +1569,11 @@ const isLoggedIn = !!localStorage.getItem("token");
                         purpose
                       )}`
                       : ""
+                      }${landmark
+                        ? `&landmark=${encodeURIComponent(
+                          landmark
+                        )}`
+                        : ""
                       }`}
                     className="group block overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-black/5"
                   >
@@ -1476,6 +1689,51 @@ const isLoggedIn = !!localStorage.getItem("token");
 
                       </div>
 
+                      {/* NEARBY LANDMARKS */}
+
+                      {property.matchedLandmark ? (
+                        <p className="mt-3 flex items-start gap-1.5 rounded-lg bg-[var(--color-coral-light)] px-3 py-2 text-xs font-semibold text-[var(--color-coral)]">
+                          <Landmark
+                            size={14}
+                            className="mt-0.5 shrink-0"
+                          />
+                          <span>
+                            {property.matchedLandmark.name} is{" "}
+                            {formatLandmarkDistance(
+                              property.matchedLandmark.distanceKm
+                            )}{" "}
+                            away
+                          </span>
+                        </p>
+                      ) : (
+                        property.nearbyLandmarks &&
+                        property.nearbyLandmarks.length > 0 && (
+                          <ul className="mt-3 space-y-1">
+                            {property.nearbyLandmarks
+                              .slice(0, 2)
+                              .map((place) => (
+                                <li
+                                  key={place.id}
+                                  className="flex items-center gap-1.5 text-xs text-[var(--color-text-secondary)]"
+                                >
+                                  <Landmark
+                                    size={12}
+                                    className="shrink-0 text-[var(--color-coral)]"
+                                  />
+                                  <span className="truncate">
+                                    {place.name}
+                                  </span>
+                                  <span className="shrink-0 font-semibold">
+                                    {formatLandmarkDistance(
+                                      place.distanceKm
+                                    )}
+                                  </span>
+                                </li>
+                              ))}
+                          </ul>
+                        )
+                      )}
+
                       {/* SUITABLE PURPOSES */}
 
                       {property.suitablePurposes &&
@@ -1545,6 +1803,12 @@ const isLoggedIn = !!localStorage.getItem("token");
                   </Link>
                 );
               })}
+
+                    </div>
+
+                  </div>
+                )
+              )}
 
             </div>
           )}

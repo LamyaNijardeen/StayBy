@@ -1,3 +1,6 @@
+import { apiError } from "./apiError";
+import type { LandmarkResponse } from "./landmarkService";
+
 export interface RoomResponse {
   id: number;
   propertyId: number;
@@ -29,27 +32,38 @@ export interface PropertySearchResponse {
   longitude: number | null;
   verified: boolean;
 
-  owner: {
-    id: number;
-    name: string;
-    email: string;
-  };
-
+owner: {
+  id: number;
+  name: string;
+  email: string;
+  phone: string | null;
+};
   availableRooms: RoomResponse[];
 
   suitablePurposes: string[];
+  amenities: string[];
+
+  /* Important places near the stay (hospital, university...) */
+  nearbyLandmarks?: LandmarkResponse[];
+
+  /* Set only when the traveler searched by landmark */
+  matchedLandmark?: LandmarkResponse | null;
+
+  /* true when the stay satisfies everything the traveler typed */
+  relevant?: boolean;
 }
 
 export interface PropertySearchParams {
   city?: string;
   propertyType?: string;
-  checkIn: string;
-  checkOut: string;
+  checkIn?: string;
+  checkOut?: string;
   guests: number;
   purpose?: string;
+  landmark?: string;
 }
 
-const API_BASE_URL = "http://localhost:8080";
+import { API_BASE_URL } from "../config";
 
 /**
  * Get the JWT token stored after login.
@@ -95,8 +109,10 @@ export async function searchAvailableProperties(
     );
   }
 
-  searchParams.append("checkIn", params.checkIn);
-  searchParams.append("checkOut", params.checkOut);
+  if (params.checkIn && params.checkOut) {
+    searchParams.append("checkIn", params.checkIn);
+    searchParams.append("checkOut", params.checkOut);
+  }
   searchParams.append(
     "guests",
     params.guests.toString()
@@ -104,6 +120,10 @@ export async function searchAvailableProperties(
 
   if (params.purpose) {
     searchParams.append("purpose", params.purpose);
+  }
+
+  if (params.landmark) {
+    searchParams.append("landmark", params.landmark);
   }
 
   const response = await fetch(
@@ -114,11 +134,7 @@ export async function searchAvailableProperties(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to search properties"
-    );
+    throw await apiError(response, "Failed to search properties");
   }
 
   return response.json();
@@ -165,11 +181,7 @@ export async function getAllProperties(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to fetch properties"
-    );
+    throw await apiError(response, "Failed to fetch properties");
   }
 
   return response.json();
@@ -200,11 +212,7 @@ export async function getPropertyById(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to fetch property"
-    );
+    throw await apiError(response, "Failed to fetch property");
   }
 
   return response.json();
@@ -233,11 +241,7 @@ export async function getAvailableRoomsByProperty(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to fetch available rooms"
-    );
+    throw await apiError(response, "Failed to fetch available rooms");
   }
 
   return response.json();
@@ -275,11 +279,7 @@ export async function getAvailableRoomsByDates(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to check room availability"
-    );
+    throw await apiError(response, "Failed to check room availability");
   }
 
   return response.json();
@@ -308,11 +308,7 @@ export async function getRoomImages(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to fetch room images"
-    );
+    throw await apiError(response, "Failed to fetch room images");
   }
 
   return response.json();
@@ -341,11 +337,7 @@ export async function getPropertyImages(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to fetch property images"
-    );
+    throw await apiError(response, "Failed to fetch property images");
   }
 
   return response.json();
@@ -409,12 +401,7 @@ export async function addFavorite(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText ||
-        "Failed to add property to favorites"
-    );
+    throw await apiError(response, "Failed to add property to favorites");
   }
 }
 
@@ -439,12 +426,7 @@ export async function checkFavorite(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText ||
-        "Failed to check favorite status"
-    );
+    throw await apiError(response, "Failed to check favorite status");
   }
 
   return response.json();
@@ -471,12 +453,7 @@ export async function removeFavorite(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText ||
-        "Failed to remove property from favorites"
-    );
+    throw await apiError(response, "Failed to remove property from favorites");
   }
 }
 
@@ -523,11 +500,7 @@ export async function getFavorites(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to fetch favorites"
-    );
+    throw await apiError(response, "Failed to fetch favorites");
   }
 
   return response.json();

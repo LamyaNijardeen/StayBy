@@ -167,15 +167,15 @@ export default function AdminBookings() {
         {/* Header */}
         <div className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="mb-2 text-sm font-semibold uppercase tracking-[0.16em] text-[var(--color-primary)]">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-coral)]">
               Administration
             </p>
 
-            <h1 className="text-3xl font-bold tracking-tight text-[var(--color-heading)]">
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--color-navy)] sm:text-4xl">
               Manage Bookings
             </h1>
 
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
               View and monitor all bookings made across the
               StayBy platform.
             </p>
@@ -211,7 +211,7 @@ export default function AdminBookings() {
         </div>
 
 {/* Summary Cards */}
-<div className="mb-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+<div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 [&>*:last-child:nth-child(odd)]:col-span-2 lg:[&>*:last-child:nth-child(odd)]:col-span-1">
   {/* Total */}
   <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-primary)]/10 text-[var(--color-primary)]">
@@ -520,7 +520,7 @@ export default function AdminBookings() {
           </div>
         ) : (
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto md:block">
               <table className="min-w-[1100px] w-full">
                 <thead>
                   <tr className="border-b border-slate-200 bg-slate-50/80">
@@ -710,6 +710,103 @@ export default function AdminBookings() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* PHONE / SMALL SCREENS: one card per booking */}
+            <div className="divide-y divide-slate-100 md:hidden">
+              {filteredBookings.map((booking) => (
+                <div key={booking.id} className="space-y-3 px-4 py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="font-semibold text-[var(--color-heading)]">
+                        Booking #{booking.id}
+                      </p>
+
+                      <p className="text-xs text-slate-400">
+                        Room #{booking.roomId} · created{" "}
+                        {formatDateTime(booking.createdAt)}
+                      </p>
+                    </div>
+
+                    <span
+                      className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${getStatusClasses(
+                        booking.status
+                      )}`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${getStatusDot(
+                          booking.status
+                        )}`}
+                      />
+                      {booking.status}
+                    </span>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-semibold text-slate-800">
+                      {booking.propertyName}
+                    </p>
+
+                    <p className="text-xs text-slate-500">
+                      {booking.roomName}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-primary)]/10 text-sm font-bold text-[var(--color-primary)]">
+                      {booking.travelerName.charAt(0).toUpperCase()}
+                    </div>
+
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-slate-800">
+                        {booking.travelerName}
+                      </p>
+
+                      <p className="break-all text-xs text-slate-500">
+                        {booking.travelerEmail}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 rounded-xl bg-slate-50 px-3 py-2.5 text-xs">
+                    <div>
+                      <p className="text-slate-400">Check-in</p>
+                      <p className="font-medium text-slate-700">
+                        {formatDate(booking.checkIn)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-slate-400">Check-out</p>
+                      <p className="font-medium text-slate-700">
+                        {formatDate(booking.checkOut)}
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="text-slate-400">Guests</p>
+                      <p className="font-medium text-slate-700">
+                        {booking.guests}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-slate-400">Amount</p>
+
+                    <p className="text-sm font-bold text-[var(--color-heading)]">
+                      {formatCurrency(booking.totalPrice)}
+                    </p>
+                  </div>
+
+                  {booking.status === "REJECTED" &&
+                    booking.rejectionReason && (
+                      <p className="text-xs leading-5 text-red-600">
+                        Reason: {booking.rejectionReason}
+                      </p>
+                    )}
+                </div>
+              ))}
             </div>
 
             {/* Table Footer */}

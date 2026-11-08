@@ -84,7 +84,16 @@ export default function OwnerRefunds() {
       return;
     }
 
-    if (!refundReference.trim()) {
+    const selectedRefund = refunds.find(
+      (refund) => refund.id === completeRefundId
+    );
+
+    const isCardRefund =
+      selectedRefund?.paymentMethod === "PAYHERE";
+
+    // Bank transfers need a reference. Card payments do not:
+    // leaving it empty refunds the card through PayHere.
+    if (!isCardRefund && !refundReference.trim()) {
       setActionError("Refund reference is required.");
       return;
     }
@@ -225,6 +234,10 @@ export default function OwnerRefunds() {
     );
   }
 
+  const isCardRefundSelected =
+    refunds.find((refund) => refund.id === completeRefundId)
+      ?.paymentMethod === "PAYHERE";
+
   return (
     <div className="min-h-screen bg-[var(--color-background)]">
       <OwnerNavbar />
@@ -237,11 +250,15 @@ export default function OwnerRefunds() {
 
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-[var(--color-text)]">
+            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-coral)]">
+              Owner dashboard
+            </p>
+
+            <h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--color-navy)] sm:text-4xl">
               Refunds
             </h1>
 
-            <p className="mt-1 text-sm text-[var(--color-secondary)]">
+            <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
               Manage refund requests for your properties.
             </p>
           </div>
@@ -276,7 +293,7 @@ export default function OwnerRefunds() {
             SUMMARY
         ===================================================== */}
 
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
+        <div className="mb-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 [&>*:last-child:nth-child(odd)]:col-span-2 sm:[&>*:last-child:nth-child(odd)]:col-span-1">
           <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
             <p className="text-sm text-[var(--color-secondary)]">
               Total refunds
@@ -433,6 +450,36 @@ export default function OwnerRefunds() {
                         </div>
                       </div>
 
+                      <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <p className="text-xs font-medium text-[var(--color-secondary)]">
+                            Traveler
+                          </p>
+
+                          <p className="mt-1 text-sm font-semibold text-[var(--color-text)]">
+                            {refund.travelerName || "-"}
+                          </p>
+
+                          {refund.travelerEmail && (
+                            <p className="text-xs text-[var(--color-secondary)]">
+                              {refund.travelerEmail}
+                            </p>
+                          )}
+                        </div>
+
+                        <div>
+                          <p className="text-xs font-medium text-[var(--color-secondary)]">
+                            Paid by
+                          </p>
+
+                          <p className="mt-1 text-sm font-semibold text-[var(--color-text)]">
+                            {refund.paymentMethod === "PAYHERE"
+                              ? "Card (PayHere)"
+                              : "Bank transfer"}
+                          </p>
+                        </div>
+                      </div>
+
                       <div className="mt-5 rounded-xl bg-gray-50 px-4 py-3">
                         <p className="text-xs font-medium text-[var(--color-secondary)]">
                           Reason
@@ -524,14 +571,26 @@ export default function OwnerRefunds() {
               Complete refund
             </h2>
 
-            <p className="mt-2 text-sm text-[var(--color-secondary)]">
-              Enter the bank transfer reference after
-              you have sent the refund to the traveler.
-            </p>
+            {isCardRefundSelected ? (
+              <p className="mt-2 text-sm leading-6 text-[var(--color-secondary)]">
+                This booking was paid by card. Leave the
+                reference empty and StayBy will refund the
+                card automatically through PayHere. If you
+                already refunded it in your PayHere
+                dashboard, enter that reference instead.
+              </p>
+            ) : (
+              <p className="mt-2 text-sm text-[var(--color-secondary)]">
+                Enter the bank transfer reference after
+                you have sent the refund to the traveler.
+              </p>
+            )}
 
             <label className="mt-5 block">
               <span className="text-sm font-semibold text-[var(--color-text)]">
-                Refund reference
+                {isCardRefundSelected
+                  ? "Refund reference (optional)"
+                  : "Refund reference"}
               </span>
 
               <input
@@ -541,7 +600,11 @@ export default function OwnerRefunds() {
                   setRefundReference(event.target.value)
                 }
                 maxLength={100}
-                placeholder="Enter transfer reference"
+                placeholder={
+                  isCardRefundSelected
+                    ? "Leave empty to refund via PayHere"
+                    : "Enter transfer reference"
+                }
                 className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 text-sm outline-none transition focus:border-[var(--color-coral)] focus:ring-2 focus:ring-[var(--color-coral)]/20"
               />
             </label>
@@ -573,7 +636,10 @@ export default function OwnerRefunds() {
               >
                 {processingRefundId !== null
                   ? "Processing..."
-                  : "Complete refund"}
+                  : isCardRefundSelected &&
+                      !refundReference.trim()
+                    ? "Refund to card"
+                    : "Complete refund"}
               </button>
             </div>
           </div>

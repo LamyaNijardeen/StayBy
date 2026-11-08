@@ -1,5 +1,6 @@
 package com.stayby.backend.controller;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import com.stayby.backend.dto.PropertyImageResponse;
 import com.stayby.backend.entity.PropertyImage;
 import com.stayby.backend.service.PropertyImageService;
@@ -23,6 +24,7 @@ public class PropertyImageController {
                 this.propertyImageService = propertyImageService;
         }
 
+        @PreAuthorize("hasRole('OWNER')")
         @PostMapping
         public ResponseEntity<?> uploadImage(
                         @PathVariable Long propertyId,
@@ -77,6 +79,7 @@ public class PropertyImageController {
                 }
         }
 
+        @PreAuthorize("hasRole('OWNER')")
         @DeleteMapping("/{imageId}")
         public ResponseEntity<?> deleteImage(
                         @PathVariable Long propertyId,

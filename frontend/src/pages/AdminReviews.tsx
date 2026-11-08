@@ -18,6 +18,7 @@ import {
 } from "../services/adminService";
 
 import type { AdminReview } from "../services/adminService";
+import ErrorPopup from "../components/ErrorPopup";
 
 type RatingFilter = "ALL" | "5" | "4" | "3" | "2" | "1";
 
@@ -287,17 +288,13 @@ function AdminReviews() {
             ERROR
         ====================================================== */}
 
-        {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-            {error}
-          </div>
-        )}
+        <ErrorPopup message={error} onClose={() => setError("")} />
 
         {/* =====================================================
             SUMMARY
         ====================================================== */}
 
-        <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-5 [&>*:last-child:nth-child(odd)]:col-span-2 lg:[&>*:last-child:nth-child(odd)]:col-span-1">
 
           <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm">
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[var(--color-coral-light)]">
@@ -494,7 +491,7 @@ function AdminReviews() {
 
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 
-            <div className="overflow-x-auto">
+            <div className="hidden overflow-x-auto md:block">
 
               <table className="w-full min-w-[1050px]">
 
@@ -674,6 +671,73 @@ function AdminReviews() {
 
               </table>
 
+            </div>
+
+            {/* PHONE / SMALL SCREENS: one card per review */}
+            <div className="divide-y divide-slate-100 md:hidden">
+              {filteredReviews.map((review) => (
+                <div key={review.id} className="space-y-3 px-4 py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[var(--color-coral-light)]">
+                        <User className="h-4 w-4 text-[var(--color-coral)]" />
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-[var(--color-navy)]">
+                          {review.travelerName}
+                        </p>
+
+                        <p className="break-all text-xs text-slate-500">
+                          {review.travelerEmail}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <RatingStars rating={review.rating} />
+
+                      <p className="mt-0.5 text-xs font-medium text-slate-500">
+                        {getRatingLabel(review.rating)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 text-sm text-slate-700">
+                    <Building2 className="h-4 w-4 shrink-0 text-slate-400" />
+                    <span className="font-medium">
+                      {review.propertyName}
+                    </span>
+                  </div>
+
+                  {review.comment ? (
+                    <p className="text-sm leading-5 text-slate-600">
+                      "{review.comment}"
+                    </p>
+                  ) : (
+                    <p className="text-sm italic text-slate-400">
+                      No written comment
+                    </p>
+                  )}
+
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="flex items-center gap-2 text-xs text-slate-500">
+                      <CalendarDays className="h-4 w-4 text-slate-400" />
+                      {formatDate(review.createdAt)} · Booking #
+                      {review.bookingId}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => openDeletePopup(review)}
+                      className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-xs font-semibold text-red-600 transition hover:bg-red-50"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Footer */}

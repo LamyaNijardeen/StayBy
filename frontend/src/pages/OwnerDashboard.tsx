@@ -201,25 +201,6 @@ function OwnerDashboard() {
     }
   );
 
-  const monthlyRevenue = monthNames.map(
-    (_, monthIndex) => {
-      return revenueBookings
-        .filter((booking) => {
-          const date = new Date(booking.checkIn);
-
-          return (
-            date.getFullYear() === currentYear &&
-            date.getMonth() === monthIndex
-          );
-        })
-        .reduce(
-          (sum, booking) =>
-            sum + Number(booking.totalPrice || 0),
-          0
-        );
-    }
-  );
-
   const maxMonthlyBookings = Math.max(
     ...monthlyBookingCounts,
     1
@@ -361,7 +342,7 @@ function OwnerDashboard() {
             MAIN STATS
         ===================================================== */}
 
-        <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <section className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
 
           {/* Properties */}
           <div className="rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-5 shadow-sm">
@@ -523,7 +504,7 @@ function OwnerDashboard() {
             <div className="p-6">
 
               {/* Analytics cards */}
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
 
                 {/* Confirmed */}
                 <div className="rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] p-5">

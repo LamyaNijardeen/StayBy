@@ -10,11 +10,14 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 
 import OwnerNavbar from "../components/OwnerNavbar";
+import ProfilePhotoEditor from "../components/ProfilePhotoEditor";
+import AccountSettings from "../components/AccountSettings";
 import {
   getCurrentUser,
   updateCurrentUser,
   type CurrentUserResponse,
 } from "../services/userService";
+import ErrorPopup from "../components/ErrorPopup";
 
 function OwnerProfile() {
   const [user, setUser] =
@@ -165,11 +168,7 @@ function OwnerProfile() {
         )}
 
         {/* Error */}
-        {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            {error}
-          </div>
-        )}
+        <ErrorPopup message={error} onClose={() => setError("")} />
 
         {/* Success */}
         {success && (
@@ -187,11 +186,7 @@ function OwnerProfile() {
               <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
 
                 {/* Avatar */}
-                <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-full bg-[var(--color-coral-light)] text-2xl font-bold text-[var(--color-coral)]">
-                  {displayName
-                    .charAt(0)
-                    .toUpperCase()}
-                </div>
+                <ProfilePhotoEditor name={displayName} />
 
                 {/* User information */}
                 <div className="min-w-0">
@@ -472,6 +467,8 @@ function OwnerProfile() {
             </div>
           </section>
         )}
+
+        {!loading && user && <AccountSettings />}
 
       </main>
     </div>

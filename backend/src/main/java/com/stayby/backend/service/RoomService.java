@@ -153,15 +153,17 @@ public class RoomService {
         for (Room room : suitableRooms) {
 
             /*
-             * Only PENDING and CONFIRMED bookings block a room.
-             * CANCELLED and COMPLETED bookings do not block availability.
+             * Only PENDING, AWAITING_PAYMENT and CONFIRMED bookings
+             * block a room. REJECTED, CANCELLED and COMPLETED
+             * bookings do not.
              */
-      List<Booking> conflictingBookings =
-        bookingRepository.findOverlappingBookings(
-                room.getId(),
-                checkIn,
-                checkOut
-        );
+            List<Booking> conflictingBookings =
+                    bookingRepository.findOverlappingBookingsByStatus(
+                            room.getId(),
+                            checkIn,
+                            checkOut,
+                            BookingService.BLOCKING_STATUSES
+                    );
 
             if (conflictingBookings.isEmpty()) {
                 availableRooms.add(room);
@@ -169,6 +171,21 @@ public class RoomService {
         }
 
         return availableRooms;
+    }
+
+    /**
+     * Rooms that can hold the guests, ignoring dates.
+     * Used when the traveler searches without choosing dates.
+     */
+    public List<Room> getRoomsForGuests(Long propertyId, Integer guests) {
+
+        int needed = guests == null || guests <= 0 ? 1 : guests;
+
+        return roomRepository
+                .findByPropertyIdAndAvailableTrueAndCapacityGreaterThanEqual(
+                        propertyId,
+                        needed
+                );
     }
 
     private void checkOwnership(

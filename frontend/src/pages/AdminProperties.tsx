@@ -1,9 +1,11 @@
+import { showAlert } from "../services/dialog";
 import { useEffect, useMemo, useState } from "react";
 import {
   Building2,
   CalendarDays,
   CheckCircle2,
   Clock3,
+  Eye,
   MapPin,
   Search,
   ShieldCheck,
@@ -11,12 +13,14 @@ import {
 } from "lucide-react";
 
 import AdminNavbar from "../components/AdminNavbar";
+import AdminPropertyDetails from "../components/AdminPropertyDetails";
 import {
   getAdminProperties,
   type AdminProperty,
 } from "../services/adminService";
+import { apiError } from "../services/apiError";
 
-const API_BASE_URL = "http://localhost:8080";
+import { API_BASE_URL } from "../config";
 
 function AdminProperties() {
   const [properties, setProperties] = useState<AdminProperty[]>([]);
@@ -27,6 +31,9 @@ function AdminProperties() {
   const [statusFilter, setStatusFilter] = useState("ALL");
 
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+
+  /* Property currently open in the review pop-up. */
+  const [detailsId, setDetailsId] = useState<number | null>(null);
 
   useEffect(() => {
     const loadProperties = async () => {
@@ -101,11 +108,7 @@ function AdminProperties() {
       );
 
       if (!response.ok) {
-        const errorText = await response.text();
-
-        throw new Error(
-          errorText || "Failed to verify property."
-        );
+        throw await apiError(response, "Failed to verify property.");
       }
 
       setProperties((current) =>
@@ -121,7 +124,7 @@ function AdminProperties() {
     } catch (err) {
       console.error("Failed to verify property:", err);
 
-      alert(
+      showAlert(
         err instanceof Error
           ? err.message
           : "Failed to verify property."
@@ -153,11 +156,7 @@ function AdminProperties() {
       );
 
       if (!response.ok) {
-        const errorText = await response.text();
-
-        throw new Error(
-          errorText || "Failed to reject property."
-        );
+        throw await apiError(response, "Failed to reject property.");
       }
 
       setProperties((current) =>
@@ -173,7 +172,7 @@ function AdminProperties() {
     } catch (err) {
       console.error("Failed to reject property:", err);
 
-      alert(
+      showAlert(
         err instanceof Error
           ? err.message
           : "Failed to reject property."
@@ -216,7 +215,7 @@ function AdminProperties() {
         </div>
 
         {/* SUMMARY */}
-        <section className="mt-8 grid gap-4 sm:grid-cols-3">
+        <section className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 [&>*:last-child:nth-child(odd)]:col-span-2 sm:[&>*:last-child:nth-child(odd)]:col-span-1">
 
           <div className="rounded-2xl border border-[var(--color-border)] bg-white p-5 shadow-sm">
             <div className="flex items-center justify-between">
@@ -378,7 +377,8 @@ function AdminProperties() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <>
+            <div className="hidden overflow-x-auto md:block">
               <table className="w-full min-w-[1000px] text-left">
 
                 <thead>
@@ -474,6 +474,10 @@ function AdminProperties() {
                         <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
                           {property.ownerEmail}
                         </p>
+
+                        <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
+                          {property.ownerPhone || "No phone"}
+                        </p>
                       </td>
 
                       {/* STATUS */}
@@ -505,6 +509,15 @@ function AdminProperties() {
                       <td className="px-6 py-4">
 
                         <div className="flex justify-end gap-2">
+
+                          <button
+                            type="button"
+                            onClick={() => setDetailsId(property.id)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-white px-3 py-2 text-xs font-semibold text-[var(--color-navy)] transition hover:bg-[var(--color-background)]"
+                          >
+                            <Eye size={14} />
+                            Details
+                          </button>
 
                           {!property.verified && (
                             <button
@@ -555,11 +568,112 @@ function AdminProperties() {
 
               </table>
             </div>
+
+            {/* PHONE / SMALL SCREENS: one card per property */}
+            <div className="divide-y divide-[var(--color-border)] md:hidden">
+              {filteredProperties.map((property) => (
+                <div key={property.id} className="space-y-3 px-4 py-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-[var(--color-navy)]">
+                        {property.name}
+                      </p>
+
+                      <p className="text-xs text-[var(--color-text-secondary)]">
+                        {property.propertyType}
+                      </p>
+                    </div>
+
+                    {property.verified ? (
+                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+                        <ShieldCheck size={13} />
+                        Verified
+                      </span>
+                    ) : (
+                      <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700">
+                        <Clock3 size={13} />
+                        Pending
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="flex items-start gap-2 text-xs text-[var(--color-text-secondary)]">
+                    <MapPin size={14} className="mt-0.5 shrink-0" />
+                    <span>
+                      {property.address}, {property.city}
+                    </span>
+                  </div>
+
+                  <div className="text-xs text-[var(--color-text-secondary)]">
+                    <p className="font-medium text-[var(--color-navy)]">
+                      {property.ownerName}
+                    </p>
+                    <p>{property.ownerEmail}</p>
+                    <p>{property.ownerPhone || "No phone"}</p>
+                  </div>
+
+                  <p className="flex items-center gap-2 text-xs text-[var(--color-text-secondary)]">
+                    <CalendarDays size={14} />
+                    {formatDate(property.createdAt)}
+                  </p>
+
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => setDetailsId(property.id)}
+                      className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-[var(--color-border)] bg-white px-3 py-2.5 text-xs font-semibold text-[var(--color-navy)]"
+                    >
+                      <Eye size={14} />
+                      Details
+                    </button>
+
+                    {property.verified ? (
+                      <button
+                        type="button"
+                        onClick={() => handleReject(property.id)}
+                        disabled={actionLoading === property.id}
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-white px-3 py-2.5 text-xs font-semibold text-red-600 disabled:opacity-50"
+                      >
+                        <XCircle size={14} />
+                        Reject
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => handleVerify(property.id)}
+                        disabled={actionLoading === property.id}
+                        className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-[var(--color-navy)] px-3 py-2.5 text-xs font-semibold text-white disabled:opacity-50"
+                      >
+                        <CheckCircle2 size={14} />
+                        Verify
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            </>
           )}
 
         </section>
 
       </main>
+
+      {detailsId !== null && (
+        <AdminPropertyDetails
+          propertyId={detailsId}
+          busy={actionLoading === detailsId}
+          onClose={() => setDetailsId(null)}
+          onVerify={async (id) => {
+            await handleVerify(id);
+            setDetailsId(null);
+          }}
+          onReject={async (id) => {
+            await handleReject(id);
+            setDetailsId(null);
+          }}
+        />
+      )}
     </div>
   );
 }

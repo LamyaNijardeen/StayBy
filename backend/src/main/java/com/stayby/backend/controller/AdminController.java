@@ -14,6 +14,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -67,6 +70,48 @@ public AdminController(
         return ResponseEntity.ok(users);
     }
 
+    @PutMapping("/users/{id}/suspended")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> setUserSuspended(
+            @PathVariable Long id,
+            @RequestBody Map<String, Boolean> request,
+            Authentication authentication
+    ) {
+
+        Boolean suspended = request.get("suspended");
+
+        if (suspended == null) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of("message", "Missing 'suspended' value."));
+        }
+
+        if (String.valueOf(id).equals(authentication.getName())) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of("message", "You cannot suspend your own account."));
+        }
+
+        User user = userRepository.findById(id).orElse(null);
+
+        if (user == null) {
+            return ResponseEntity
+                    .status(404)
+                    .body(Map.of("message", "User not found."));
+        }
+
+        if (user.getRole().name().equals("ADMIN")) {
+            return ResponseEntity
+                    .badRequest()
+                    .body(Map.of("message", "Administrator accounts cannot be suspended."));
+        }
+
+        user.setSuspended(suspended);
+        userRepository.save(user);
+
+        return ResponseEntity.ok(toUserResponse(user));
+    }
+
     @GetMapping("/properties")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Map<String, Object>>> getAllProperties() {
@@ -95,13 +140,19 @@ public AdminController(
 
     private Map<String, Object> toUserResponse(User user) {
 
-        return Map.of(
-                "id", user.getId(),
-                "name", user.getName(),
-                "email", user.getEmail(),
-                "role", user.getRole().name(),
-                "createdAt", user.getCreatedAt()
-        );
+        // HashMap (not Map.of) because phone can be empty (null).
+        Map<String, Object> response = new HashMap<>();
+
+        response.put("id", user.getId());
+        response.put("name", user.getName());
+        response.put("email", user.getEmail());
+        response.put("phone", user.getPhone());
+        response.put("role", user.getRole().name());
+        response.put("emailVerified", user.isEmailVerified());
+        response.put("suspended", user.isSuspended());
+        response.put("createdAt", user.getCreatedAt());
+
+        return response;
     }
 
     private Map<String, Object> toPropertyResponse(Property property) {
@@ -122,6 +173,7 @@ public AdminController(
         response.put("ownerId", property.getOwner().getId());
         response.put("ownerName", property.getOwner().getName());
         response.put("ownerEmail", property.getOwner().getEmail());
+        response.put("ownerPhone", property.getOwner().getPhone());
 
         return response;
     }

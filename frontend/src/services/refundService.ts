@@ -1,4 +1,5 @@
-const API_BASE_URL = "http://localhost:8080";
+import { apiError } from "./apiError";
+import { API_BASE_URL } from "../config";
 
 export interface RefundResponse {
   id: number;
@@ -10,7 +11,13 @@ export interface RefundResponse {
   refundReference?: string | null;
   processedAt?: string | null;
   createdAt: string;
+
+  // BANK_TRANSFER or PAYHERE
+  paymentMethod?: string | null;
+  travelerName?: string | null;
+  travelerEmail?: string | null;
 }
+
 
 function getToken(): string {
   const token = localStorage.getItem("token");
@@ -44,11 +51,7 @@ export async function getOwnerRefunds(): Promise<
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to fetch refunds."
-    );
+    throw await apiError(response, "Failed to fetch refunds.");
   }
 
   return response.json();
@@ -74,11 +77,7 @@ export async function getTravelerRefund(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to fetch refund."
-    );
+    throw await apiError(response, "Failed to fetch refund.");
   }
 
   return response.json();
@@ -109,11 +108,7 @@ export async function completeRefund(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to complete refund."
-    );
+    throw await apiError(response, "Failed to complete refund.");
   }
 
   return response.json();
@@ -144,11 +139,7 @@ export async function failRefund(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to update refund."
-    );
+    throw await apiError(response, "Failed to update refund.");
   }
 
   return response.json();

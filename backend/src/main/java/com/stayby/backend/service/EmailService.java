@@ -46,6 +46,34 @@ public class EmailService {
         }
 
         // =========================================================
+        // PASSWORD RESET CODE EMAIL
+        // =========================================================
+        public void sendPasswordResetCode(
+                        String recipientEmail,
+                        String recipientName,
+                        String resetCode) {
+
+                SimpleMailMessage message = new SimpleMailMessage();
+
+                message.setTo(recipientEmail);
+                message.setSubject("StayBy - Reset your password");
+
+                message.setText(
+                                "Hello " + recipientName + ",\n\n"
+                                                + "We received a request to reset your StayBy password.\n\n"
+                                                + "Your password reset code is:\n\n"
+                                                + resetCode
+                                                + "\n\n"
+                                                + "This code will expire in 10 minutes.\n\n"
+                                                + "If you did not ask for this, you can safely ignore "
+                                                + "this email. Your password will not change.\n\n"
+                                                + "Regards,\n"
+                                                + "StayBy Team");
+
+                mailSender.send(message);
+        }
+
+        // =========================================================
         // BOOKING CONFIRMATION EMAIL
         // =========================================================
         public void sendBookingConfirmation(
@@ -343,6 +371,24 @@ public class EmailService {
                                 .getRoom()
                                 .getName();
 
+                // Card (PayHere) or Bank Transfer
+                String refundMethod = refund.getPayment() != null
+                                && "PAYHERE".equalsIgnoreCase(
+                                                refund.getPayment().getPaymentMethod())
+                                                                ? "Card (PayHere)"
+                                                                : "Bank Transfer";
+
+                String refundReference = refund.getRefundReference() == null
+                                || refund.getRefundReference().isBlank()
+                                                ? "-"
+                                                : refund.getRefundReference();
+
+                String processedAt = refund.getProcessedAt() == null
+                                ? "-"
+                                : refund.getProcessedAt().format(
+                                                java.time.format.DateTimeFormatter
+                                                                .ofPattern("dd MMM yyyy, hh:mm a"));
+
                 try {
 
                         MimeMessage message = mailSender.createMimeMessage();
@@ -426,20 +472,22 @@ public class EmailService {
 
                                         + "<tr>"
                                         + "<td><strong>Refund Method</strong></td>"
-                                        + "<td>Bank Transfer</td>"
+                                        + "<td>"
+                                        + refundMethod
+                                        + "</td>"
                                         + "</tr>"
 
                                         + "<tr>"
                                         + "<td><strong>Refund Reference</strong></td>"
                                         + "<td>"
-                                        + refund.getRefundReference()
+                                        + refundReference
                                         + "</td>"
                                         + "</tr>"
 
                                         + "<tr>"
                                         + "<td><strong>Processed</strong></td>"
                                         + "<td>"
-                                        + refund.getProcessedAt()
+                                        + processedAt
                                         + "</td>"
                                         + "</tr>"
 

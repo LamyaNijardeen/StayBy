@@ -1,4 +1,5 @@
-const API_BASE_URL = "http://localhost:8080";
+import { apiError } from "./apiError";
+import { API_BASE_URL } from "../config";
 
 export interface RoomResponse {
   id: number;
@@ -46,11 +47,7 @@ export async function getPropertyRooms(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load rooms."
-    );
+    throw await apiError(response, "Failed to load rooms.");
   }
 
   return response.json();
@@ -82,11 +79,7 @@ export async function createRoom(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to create room."
-    );
+    throw await apiError(response, "Failed to create room.");
   }
 
   return response.json();
@@ -119,11 +112,7 @@ export async function updateRoom(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to update room."
-    );
+    throw await apiError(response, "Failed to update room.");
   }
 
   return response.json();
@@ -153,11 +142,7 @@ export async function deleteRoom(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to delete room."
-    );
+    throw await apiError(response, "Failed to delete room.");
   }
 }
 
@@ -186,11 +171,7 @@ export async function getRoomImages(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to load room images."
-    );
+    throw await apiError(response, "Failed to load room images.");
   }
 
   return response.json();
@@ -227,11 +208,7 @@ export async function uploadRoomImage(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to upload room image."
-    );
+    throw await apiError(response, "Failed to upload room image.");
   }
 
   return response.json();
@@ -263,10 +240,6 @@ export async function deleteRoomImage(
   );
 
   if (!response.ok) {
-    const errorText = await response.text();
-
-    throw new Error(
-      errorText || "Failed to delete room image."
-    );
+    throw await apiError(response, "Failed to delete room image.");
   }
 }

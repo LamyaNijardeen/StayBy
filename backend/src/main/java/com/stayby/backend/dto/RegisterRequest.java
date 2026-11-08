@@ -18,6 +18,12 @@ public class RegisterRequest {
     @Size(min = 8, max = 100, message = "Password must be between 8 and 100 characters")
     private String password;
 
+    /** "TRAVELER" (default) or "OWNER". ADMIN can never be chosen here. */
+    private String role;
+
+    @Size(max = 20, message = "Phone number must be at most 20 characters")
+    private String phone;
+
     public RegisterRequest() {
     }
 
@@ -43,5 +49,21 @@ public class RegisterRequest {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 }

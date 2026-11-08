@@ -12,7 +12,12 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.core.convert.converter.Converter;
+import org.springframework.security.authentication.AbstractAuthenticationToken;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
+import com.stayby.backend.repository.UserRepository;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
@@ -33,6 +38,13 @@ public class SecurityConfig {
 
         @Value("${stayby.jwt.secret}")
         private String jwtSecret;
+
+        /**
+         * Address(es) of the website allowed to call this API (CORS).
+         * Several can be given, separated by commas.
+         */
+        @Value("${stayby.frontend-url:http://localhost:5173}")
+        private String frontendUrl;
 
         @Bean
         public PasswordEncoder passwordEncoder() {
@@ -60,7 +72,8 @@ public class SecurityConfig {
         }
 
         @Bean
-        public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        public Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter(
+                        UserRepository userRepository) {
 
                 JwtGrantedAuthoritiesConverter authoritiesConverter = new JwtGrantedAuthoritiesConverter();
 
@@ -72,7 +85,28 @@ public class SecurityConfig {
                 converter.setJwtGrantedAuthoritiesConverter(
                                 authoritiesConverter);
 
-                return converter;
+                // Also rejects tokens of suspended users, so a suspension
+                // takes effect immediately, not only at the next login.
+                return jwt -> {
+
+                        try {
+                                Long userId = Long.valueOf(jwt.getSubject());
+
+                                boolean suspended = userRepository
+                                                .findById(userId)
+                                                .map(u -> u.isSuspended())
+                                                .orElse(false);
+
+                                if (suspended) {
+                                        throw new DisabledException(
+                                                        "Account suspended");
+                                }
+                        } catch (NumberFormatException ignored) {
+                                // subject is not a user id: nothing to check
+                        }
+
+                        return converter.convert(jwt);
+                };
         }
 
         @Bean
@@ -81,13 +115,18 @@ public class SecurityConfig {
                 CorsConfiguration configuration = new CorsConfiguration();
 
                 configuration.setAllowedOrigins(
-                                List.of("http://localhost:5173"));
+                                java.util.Arrays.stream(frontendUrl.split(","))
+                                                .map(String::trim)
+                                                .map(u -> u.replaceAll("/+$", ""))
+                                                .filter(u -> !u.isEmpty())
+                                                .toList());
 
                 configuration.setAllowedMethods(
                                 List.of(
                                                 "GET",
                                                 "POST",
                                                 "PUT",
+                                                "PATCH",
                                                 "DELETE",
                                                 "OPTIONS"));
 
@@ -111,7 +150,7 @@ public class SecurityConfig {
         public SecurityFilterChain securityFilterChain(
                         HttpSecurity http,
                         JwtDecoder jwtDecoder,
-                        JwtAuthenticationConverter jwtAuthenticationConverter) throws Exception {
+                        Converter<Jwt, AbstractAuthenticationToken> jwtAuthenticationConverter) throws Exception {
 
                 http
                                 .cors(cors -> {
@@ -142,6 +181,9 @@ public class SecurityConfig {
                                                                 "/api/properties/*/rooms/available",
                                                                 "/api/properties/*/rooms/available-dates",
                                                                 "/api/properties/*/images",
+                                                                "/api/properties/*/landmarks",
+                                                                "/api/landmarks/suggest",
+                                                                "/api/reviews/property/*",
                                                                 "/api/rooms/*/images")
                                                 .permitAll()
                                                 .requestMatchers(

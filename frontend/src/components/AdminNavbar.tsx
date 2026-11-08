@@ -1,3 +1,6 @@
+import Avatar from "./Avatar";
+import { useProfileImage } from "../services/profileImage";
+import Logo from "./Logo";
 import {
   Bell,
   Building2,
@@ -50,6 +53,8 @@ function AdminNavbar() {
 
   const navigate = useNavigate();
 
+  const profileImage = useProfileImage();
+
   const user = JSON.parse(
     localStorage.getItem("user") || "{}"
   );
@@ -57,6 +62,16 @@ function AdminNavbar() {
   const closeMenu = () => {
     setIsMenuOpen(false);
   };
+
+  // =========================================================
+  // SORT NOTIFICATIONS
+  // Unread notifications first, followed by read notifications.
+  // Preserve the original order within each group.
+  // =========================================================
+
+  const sortedNotifications = [...notifications].sort(
+    (a, b) => Number(a.read) - Number(b.read)
+  );
 
   // =========================================================
   // LOAD NOTIFICATIONS
@@ -193,6 +208,8 @@ function AdminNavbar() {
           notification.id
         );
 
+        // Update the notification immediately.
+        // It moves below unread notifications automatically.
         setNotifications((current) =>
           current.map((item) =>
             item.id === notification.id
@@ -301,37 +318,116 @@ function AdminNavbar() {
     },
   ];
 
+  // =========================================================
+  // REUSABLE NOTIFICATION LIST
+  // =========================================================
+
+  const renderNotifications = () => (
+    <div className="max-h-[420px] overflow-y-auto">
+      {sortedNotifications.length === 0 ? (
+        <div className="px-5 py-10 text-center">
+          <Bell
+            size={28}
+            className="mx-auto mb-3 text-gray-300"
+          />
+
+          <p className="text-sm font-medium text-[var(--color-navy)]">
+            No notifications
+          </p>
+
+          <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+            You are all caught up.
+          </p>
+        </div>
+      ) : (
+        sortedNotifications.map((notification) => (
+          <button
+            key={notification.id}
+            type="button"
+            onClick={() =>
+              handleNotificationClick(notification)
+            }
+            className={`flex w-full gap-3 border-b border-[var(--color-border)] px-4 py-4 text-left transition hover:bg-[var(--color-coral-light)]/60 ${
+              notification.read
+                ? "bg-white"
+                : "bg-[var(--color-coral-light)]/30"
+            }`}
+          >
+            {getNotificationIcon(notification.type)}
+
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between gap-2">
+                <p
+                  className={`text-sm ${
+                    notification.read
+                      ? "font-medium text-gray-700"
+                      : "font-semibold text-[var(--color-navy)]"
+                  }`}
+                >
+                  {notification.title}
+                </p>
+
+                {!notification.read && (
+                  <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--color-coral)]" />
+                )}
+              </div>
+
+              <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
+                {notification.message}
+              </p>
+
+              <p className="mt-2 text-[11px] text-gray-400">
+                {new Date(
+                  notification.createdAt
+                ).toLocaleString()}
+              </p>
+            </div>
+          </button>
+        ))
+      )}
+    </div>
+  );
+
+  // =========================================================
+  // NOTIFICATION DROPDOWN HEADER
+  // =========================================================
+
+  const renderNotificationHeader = () => (
+    <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
+      <div>
+        <h3 className="text-sm font-semibold text-[var(--color-navy)]">
+          Notifications
+        </h3>
+
+        {unreadCount > 0 && (
+          <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
+            {unreadCount} unread
+          </p>
+        )}
+      </div>
+
+      {unreadCount > 0 && (
+        <button
+          type="button"
+          onClick={handleMarkAllAsRead}
+          className="text-xs font-semibold text-[var(--color-coral)] hover:underline"
+        >
+          Mark all as read
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <header className="sticky top-0 z-50 w-full border-b border-[var(--color-border)] bg-[var(--color-surface)]">
       <nav className="mx-auto max-w-7xl px-6 py-4 lg:px-8">
-
-        {/* =====================================================
-            TOP ROW
-        ===================================================== */}
-
-        <div className="flex items-center justify-between">
-
+        {/* TOP ROW */}
+        <div className="flex items-center justify-between gap-3">
           {/* LOGO */}
+          <Logo to="/admin/dashboard" onClick={closeMenu} />
 
-          <Link
-            to="/admin/dashboard"
-            onClick={closeMenu}
-            className="flex items-center gap-2"
-          >
-            <span className="text-2xl font-bold tracking-tight text-[var(--color-navy)]">
-              Stay
-              <span className="text-[var(--color-coral)]">
-                By
-              </span>
-            </span>
-          </Link>
-
-          {/* ===================================================
-              DESKTOP NAVIGATION
-          =================================================== */}
-
-          <div className="hidden items-center gap-8 md:flex">
-
+          {/* DESKTOP NAVIGATION */}
+          <div className="hidden items-center gap-3 whitespace-nowrap lg:flex xl:gap-6">
             {navItems.map((item) => {
               const Icon = item.icon;
 
@@ -347,22 +443,16 @@ function AdminNavbar() {
                     }`
                   }
                 >
-                  <Icon size={16} />
+                  <Icon size={16} className="hidden xl:block" />
                   {item.label}
                 </NavLink>
               );
             })}
-
           </div>
 
-          {/* ===================================================
-              DESKTOP RIGHT
-          =================================================== */}
-
-          <div className="hidden items-center gap-3 md:flex">
-
-            {/* NOTIFICATIONS */}
-
+          {/* DESKTOP RIGHT */}
+          <div className="hidden items-center gap-2 lg:flex xl:gap-3">
+            {/* DESKTOP NOTIFICATIONS */}
             <div
               ref={notificationRef}
               className="relative"
@@ -370,153 +460,39 @@ function AdminNavbar() {
               <button
                 type="button"
                 onClick={() =>
-                  setShowNotifications(
-                    (current) => !current
-                  )
+                  setShowNotifications((current) => !current)
                 }
                 className="relative flex h-10 w-10 items-center justify-center rounded-xl text-[var(--color-navy)] transition hover:bg-[var(--color-background)]"
                 aria-label="Notifications"
+                aria-expanded={showNotifications}
               >
                 <Bell size={20} />
 
                 {unreadCount > 0 && (
                   <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-coral)] px-1 text-[10px] font-bold text-white">
-                    {unreadCount > 99
-                      ? "99+"
-                      : unreadCount}
+                    {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
               </button>
 
               {showNotifications && (
                 <div className="absolute right-0 top-12 z-50 w-96 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-xl">
-
-                  {/* HEADER */}
-
-                  <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
-                    <div>
-                      <h3 className="text-sm font-semibold text-[var(--color-navy)]">
-                        Notifications
-                      </h3>
-
-                      {unreadCount > 0 && (
-                        <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
-                          {unreadCount} unread
-                        </p>
-                      )}
-                    </div>
-
-                    {unreadCount > 0 && (
-                      <button
-                        type="button"
-                        onClick={
-                          handleMarkAllAsRead
-                        }
-                        className="text-xs font-semibold text-[var(--color-coral)] hover:underline"
-                      >
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
-
-                  {/* NOTIFICATION LIST */}
-
-                  <div className="max-h-[420px] overflow-y-auto">
-
-                    {notifications.length === 0 ? (
-                      <div className="px-5 py-10 text-center">
-                        <Bell
-                          size={28}
-                          className="mx-auto mb-3 text-gray-300"
-                        />
-
-                        <p className="text-sm font-medium text-[var(--color-navy)]">
-                          No notifications
-                        </p>
-
-                        <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-                          You are all caught up.
-                        </p>
-                      </div>
-                    ) : (
-                      notifications.map(
-                        (notification) => (
-                          <button
-                            key={notification.id}
-                            type="button"
-                            onClick={() =>
-                              handleNotificationClick(
-                                notification
-                              )
-                            }
-                            className={`flex w-full gap-3 border-b border-[var(--color-border)] px-4 py-4 text-left transition hover:bg-[var(--color-coral-light)]/60 ${
-                              notification.read
-                                ? "bg-white"
-                                : "bg-[var(--color-coral-light)]/30"
-                            }`}
-                          >
-                            {getNotificationIcon(
-                              notification.type
-                            )}
-
-                            <div className="min-w-0 flex-1">
-
-                              <div className="flex items-start justify-between gap-2">
-
-                                <p
-                                  className={`text-sm ${
-                                    notification.read
-                                      ? "font-medium text-gray-700"
-                                      : "font-semibold text-[var(--color-navy)]"
-                                  }`}
-                                >
-                                  {notification.title}
-                                </p>
-
-                                {!notification.read && (
-                                  <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--color-coral)]" />
-                                )}
-
-                              </div>
-
-                              <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
-                                {notification.message}
-                              </p>
-
-                              <p className="mt-2 text-[11px] text-gray-400">
-                                {new Date(
-                                  notification.createdAt
-                                ).toLocaleString()}
-                              </p>
-
-                            </div>
-                          </button>
-                        )
-                      )
-                    )}
-
-                  </div>
+                  {renderNotificationHeader()}
+                  {renderNotifications()}
                 </div>
               )}
             </div>
 
             {/* PROFILE */}
-
             <Link
               to="/admin/dashboard"
               className="flex items-center gap-2 rounded-xl px-2 py-2 transition hover:bg-[var(--color-background)]"
             >
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--color-coral-light)]">
-                <User
-                  size={16}
-                  className="text-[var(--color-coral)]"
-                />
-              </div>
+              <Avatar name={user.name} imageUrl={profileImage} size={32} />
 
-              <div className="text-left">
-                <p className="text-sm font-semibold text-[var(--color-navy)]">
-                  {user.name ||
-                    "Administrator"}
+              <div className="hidden text-left xl:block">
+                <p className="max-w-[9rem] truncate text-sm font-semibold text-[var(--color-navy)]">
+                  {user.name || "Administrator"}
                 </p>
 
                 <p className="text-xs text-[var(--color-text-secondary)]">
@@ -526,26 +502,21 @@ function AdminNavbar() {
             </Link>
 
             {/* LOGOUT */}
-
             <button
               type="button"
               onClick={handleLogout}
+              aria-label="Logout"
+              title="Logout"
               className="flex items-center gap-2 rounded-xl border border-[var(--color-border)] px-3 py-2 text-sm font-semibold text-[var(--color-navy)] transition hover:border-red-200 hover:bg-red-50 hover:text-red-600"
             >
               <LogOut size={16} />
-              Logout
+              <span className="hidden xl:inline">Logout</span>
             </button>
-
           </div>
 
-          {/* ===================================================
-              MOBILE MENU BUTTON
-          =================================================== */}
-
-          <div className="flex items-center gap-2 md:hidden">
-
+          {/* MOBILE CONTROLS */}
+          <div className="flex items-center gap-2 lg:hidden">
             {/* MOBILE NOTIFICATIONS */}
-
             <div
               ref={notificationRef}
               className="relative"
@@ -553,147 +524,37 @@ function AdminNavbar() {
               <button
                 type="button"
                 onClick={() =>
-                  setShowNotifications(
-                    (current) => !current
-                  )
+                  setShowNotifications((current) => !current)
                 }
                 className="relative flex h-10 w-10 items-center justify-center rounded-xl text-[var(--color-navy)] transition hover:bg-[var(--color-background)]"
                 aria-label="Notifications"
+                aria-expanded={showNotifications}
               >
                 <Bell size={20} />
 
                 {unreadCount > 0 && (
                   <span className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-[var(--color-coral)] px-1 text-[10px] font-bold text-white">
-                    {unreadCount > 99
-                      ? "99+"
-                      : unreadCount}
+                    {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
               </button>
 
               {showNotifications && (
                 <div className="absolute right-0 top-12 z-50 w-[calc(100vw-2rem)] max-w-96 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white shadow-xl">
-
-                  <div className="flex items-center justify-between border-b border-[var(--color-border)] px-4 py-3">
-                    <div>
-                      <h3 className="text-sm font-semibold text-[var(--color-navy)]">
-                        Notifications
-                      </h3>
-
-                      {unreadCount > 0 && (
-                        <p className="mt-0.5 text-xs text-[var(--color-text-secondary)]">
-                          {unreadCount} unread
-                        </p>
-                      )}
-                    </div>
-
-                    {unreadCount > 0 && (
-                      <button
-                        type="button"
-                        onClick={
-                          handleMarkAllAsRead
-                        }
-                        className="text-xs font-semibold text-[var(--color-coral)] hover:underline"
-                      >
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="max-h-[420px] overflow-y-auto">
-
-                    {notifications.length === 0 ? (
-                      <div className="px-5 py-10 text-center">
-                        <Bell
-                          size={28}
-                          className="mx-auto mb-3 text-gray-300"
-                        />
-
-                        <p className="text-sm font-medium text-[var(--color-navy)]">
-                          No notifications
-                        </p>
-
-                        <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-                          You are all caught up.
-                        </p>
-                      </div>
-                    ) : (
-                      notifications.map(
-                        (notification) => (
-                          <button
-                            key={notification.id}
-                            type="button"
-                            onClick={() =>
-                              handleNotificationClick(
-                                notification
-                              )
-                            }
-                            className={`flex w-full gap-3 border-b border-[var(--color-border)] px-4 py-4 text-left transition hover:bg-[var(--color-coral-light)]/60 ${
-                              notification.read
-                                ? "bg-white"
-                                : "bg-[var(--color-coral-light)]/30"
-                            }`}
-                          >
-                            {getNotificationIcon(
-                              notification.type
-                            )}
-
-                            <div className="min-w-0 flex-1">
-
-                              <div className="flex items-start justify-between gap-2">
-
-                                <p
-                                  className={`text-sm ${
-                                    notification.read
-                                      ? "font-medium text-gray-700"
-                                      : "font-semibold text-[var(--color-navy)]"
-                                  }`}
-                                >
-                                  {notification.title}
-                                </p>
-
-                                {!notification.read && (
-                                  <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--color-coral)]" />
-                                )}
-
-                              </div>
-
-                              <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
-                                {notification.message}
-                              </p>
-
-                              <p className="mt-2 text-[11px] text-gray-400">
-                                {new Date(
-                                  notification.createdAt
-                                ).toLocaleString()}
-                              </p>
-
-                            </div>
-                          </button>
-                        )
-                      )
-                    )}
-
-                  </div>
+                  {renderNotificationHeader()}
+                  {renderNotifications()}
                 </div>
               )}
             </div>
 
-            {/* MENU BUTTON */}
-
+            {/* MOBILE MENU BUTTON */}
             <button
               type="button"
               onClick={() =>
-                setIsMenuOpen(
-                  (current) => !current
-                )
+                setIsMenuOpen((current) => !current)
               }
               className="rounded-lg p-2 text-[var(--color-navy)] transition hover:bg-[var(--color-background)]"
-              aria-label={
-                isMenuOpen
-                  ? "Close menu"
-                  : "Open menu"
-              }
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={isMenuOpen}
             >
               {isMenuOpen ? (
@@ -702,22 +563,14 @@ function AdminNavbar() {
                 <Menu size={24} />
               )}
             </button>
-
           </div>
-
         </div>
 
-        {/* =====================================================
-            MOBILE MENU
-        ===================================================== */}
-
+        {/* MOBILE MENU */}
         {isMenuOpen && (
-          <div className="mt-4 border-t border-[var(--color-border)] pt-4 md:hidden">
-
+          <div className="mt-4 border-t border-[var(--color-border)] pt-4 lg:hidden">
             <div className="flex flex-col gap-1">
-
               {/* NAVIGATION */}
-
               {navItems.map((item) => {
                 const Icon = item.icon;
 
@@ -741,7 +594,6 @@ function AdminNavbar() {
               })}
 
               {/* PROFILE */}
-
               <Link
                 to="/admin/dashboard"
                 onClick={closeMenu}
@@ -754,11 +606,9 @@ function AdminNavbar() {
               <div className="my-2 border-t border-[var(--color-border)]" />
 
               {/* USER */}
-
               <div className="px-3 py-2">
                 <p className="text-sm font-semibold text-[var(--color-navy)]">
-                  {user.name ||
-                    "Administrator"}
+                  {user.name || "Administrator"}
                 </p>
 
                 <p className="text-xs text-[var(--color-text-secondary)]">
@@ -767,7 +617,6 @@ function AdminNavbar() {
               </div>
 
               {/* LOGOUT */}
-
               <button
                 type="button"
                 onClick={handleLogout}
@@ -776,12 +625,9 @@ function AdminNavbar() {
                 <LogOut size={16} />
                 Logout
               </button>
-
             </div>
-
           </div>
         )}
-
       </nav>
     </header>
   );

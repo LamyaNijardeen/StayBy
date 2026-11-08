@@ -1,6 +1,9 @@
+import SectionDecor from "./SectionDecor";
 import { ArrowRight, Heart, Loader2, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import Reveal from "./Reveal";
+import { getPropertyReviews } from "../services/reviewService";
 
 import {
   getAllProperties,
@@ -25,6 +28,11 @@ function FeaturedStays() {
   >({});
 
   const [favoriteIds, setFavoriteIds] = useState<number[]>([]);
+
+  /* property id -> average rating and number of reviews */
+  const [ratings, setRatings] = useState<
+    Record<number, { average: number; count: number }>
+  >({});
   const [loading, setLoading] = useState(true);
   const [favoriteLoading, setFavoriteLoading] = useState<
     number | null
@@ -51,11 +59,63 @@ function FeaturedStays() {
         const propertyData = await getAllProperties(true);
 
         /*
-         * Keep the Home page compact.
-         * The Search page remains the place to see
-         * the complete property list.
+         * "Featured" means the best-rated stays, not just the
+         * first ones in the database.
+         *   1. stays with reviews, highest average rating first
+         *      (more reviews break a tie)
+         *   2. stays without reviews yet, newest first
+         * The Search page remains the place to see everything.
          */
-        const featured = propertyData.slice(0, 6);
+        const ratingMap: Record<
+          number,
+          { average: number; count: number }
+        > = {};
+
+        await Promise.all(
+          propertyData.slice(0, 40).map(async (property) => {
+            try {
+              const reviews = await getPropertyReviews(property.id);
+
+              if (reviews.length > 0) {
+                const total = reviews.reduce(
+                  (sum, review) => sum + review.rating,
+                  0
+                );
+
+                ratingMap[property.id] = {
+                  average: total / reviews.length,
+                  count: reviews.length,
+                };
+              }
+            } catch {
+              /* no reviews available for this stay */
+            }
+          })
+        );
+
+        setRatings(ratingMap);
+
+        const featured = [...propertyData]
+          .sort((a, b) => {
+            const ra = ratingMap[a.id];
+            const rb = ratingMap[b.id];
+
+            if (ra && !rb) return -1;
+            if (!ra && rb) return 1;
+
+            if (ra && rb) {
+              if (rb.average !== ra.average) {
+                return rb.average - ra.average;
+              }
+
+              if (rb.count !== ra.count) {
+                return rb.count - ra.count;
+              }
+            }
+
+            return b.id - a.id;
+          })
+          .slice(0, 6);
 
         setProperties(featured);
 
@@ -185,13 +245,15 @@ function FeaturedStays() {
 
   return (
     <section
-  id="featured"
-  className="bg-[var(--color-background)] scroll-mt-24"
->
-      <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24">
+      id="featured"
+      className="relative scroll-mt-24 overflow-hidden bg-gradient-to-b from-[#F3FAF8] via-[#FAF9F6] to-[#FFF4EC]"
+    >
+      <SectionDecor tone="cool" />
+
+      <div className="relative mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24">
 
         {/* Section heading */}
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+        <Reveal className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-coral)]">
               Featured
@@ -202,8 +264,8 @@ function FeaturedStays() {
             </h2>
 
             <p className="mt-3 max-w-xl text-[var(--color-text-secondary)]">
-              Discover verified accommodation available
-              through StayBy.
+              Our best-rated verified stays, with the newest
+              additions after them.
             </p>
           </div>
 
@@ -215,7 +277,7 @@ function FeaturedStays() {
             View all stays
             <ArrowRight size={17} />
           </button>
-        </div>
+        </Reveal>
 
         {/* Loading */}
         {loading && (
@@ -242,7 +304,10 @@ function FeaturedStays() {
 
         {/* Property cards */}
         {!loading && properties.length > 0 && (
-          <div className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <Reveal
+            stagger
+            className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+          >
             {properties.map((property) => {
               const isFavorite =
                 favoriteIds.includes(property.id);
@@ -323,6 +388,13 @@ function FeaturedStays() {
                     </button>
 
                     {/* Verified */}
+                    {ratings[property.id] && (
+                      <span className="absolute bottom-4 right-4 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-[var(--color-navy)] shadow-sm backdrop-blur">
+                        ★ {ratings[property.id].average.toFixed(1)} (
+                        {ratings[property.id].count})
+                      </span>
+                    )}
+
                     {property.verified && (
                       <span className="absolute bottom-4 left-4 rounded-full bg-white/95 px-3 py-1 text-xs font-semibold text-green-700 shadow-sm backdrop-blur">
                         Verified
@@ -361,7 +433,7 @@ function FeaturedStays() {
                 </article>
               );
             })}
-          </div>
+          </Reveal>
         )}
 
       </div>

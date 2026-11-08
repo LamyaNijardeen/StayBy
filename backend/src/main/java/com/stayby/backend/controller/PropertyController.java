@@ -46,10 +46,11 @@ public class PropertyController {
     public ResponseEntity<?> searchAvailableProperties(
             @RequestParam(required = false) String city,
             @RequestParam(required = false) String propertyType,
-            @RequestParam LocalDate checkIn,
-            @RequestParam LocalDate checkOut,
-            @RequestParam Integer guests,
-            @RequestParam(required = false) String purpose
+            @RequestParam(required = false) LocalDate checkIn,
+            @RequestParam(required = false) LocalDate checkOut,
+            @RequestParam(required = false) Integer guests,
+            @RequestParam(required = false) String purpose,
+            @RequestParam(required = false) String landmark
     ) {
 
         try {
@@ -61,7 +62,8 @@ public class PropertyController {
                             checkIn,
                             checkOut,
                             guests,
-                            purpose
+                            purpose,
+                            landmark
                     )
             );
 
@@ -122,6 +124,7 @@ public ResponseEntity<?> getPropertyById(
     }
 }
 
+    @PreAuthorize("hasRole('OWNER')")
     @PostMapping
     public ResponseEntity<?> createProperty(
             @RequestBody Property property,
@@ -155,6 +158,7 @@ public ResponseEntity<?> getPropertyById(
         }
     }
 
+    @PreAuthorize("hasRole('OWNER')")
     @PutMapping("/{id}")
     public ResponseEntity<?> updateProperty(
             @PathVariable Long id,
@@ -188,6 +192,42 @@ public ResponseEntity<?> getPropertyById(
         }
     }
 
+    @PreAuthorize("hasRole('OWNER')")
+    @PutMapping("/{id}/listed")
+    public ResponseEntity<?> setListed(
+            @PathVariable Long id,
+            @RequestBody java.util.Map<String, Boolean> request,
+            Authentication authentication
+    ) {
+        Boolean listed = request.get("listed");
+
+        if (listed == null) {
+            return ResponseEntity
+                    .badRequest()
+                    .body("Missing 'listed' value.");
+        }
+
+        try {
+
+            Long userId = Long.valueOf(
+                    authentication.getName()
+            );
+
+            return ResponseEntity.ok(
+                    PropertyResponse.fromEntity(
+                            propertyService.setListed(id, userId, listed)
+                    )
+            );
+
+        } catch (IllegalArgumentException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.FORBIDDEN)
+                    .body(e.getMessage());
+        }
+    }
+
+    @PreAuthorize("hasRole('OWNER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProperty(
             @PathVariable Long id,
@@ -207,6 +247,12 @@ public ResponseEntity<?> getPropertyById(
             return ResponseEntity
                     .noContent()
                     .build();
+
+        } catch (IllegalStateException e) {
+
+            return ResponseEntity
+                    .status(HttpStatus.CONFLICT)
+                    .body(e.getMessage());
 
         } catch (IllegalArgumentException e) {
 
@@ -264,4 +310,3 @@ public ResponseEntity<?> getPropertyById(
         }
     }
 }
-

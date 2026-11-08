@@ -1,7 +1,10 @@
-import { ArrowLeft, Eye, EyeOff, MapPin } from "lucide-react";
+import { Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+
+import AuthShell from "../components/AuthShell";
+import { API_BASE_URL } from "../config";
 
 function Register() {
   const navigate = useNavigate();
@@ -9,6 +12,10 @@ function Register() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const [accountType, setAccountType] = useState<"TRAVELER" | "OWNER">(
+    "TRAVELER"
+  );
+  const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -35,6 +42,23 @@ function Register() {
       return;
     }
 
+    const trimmedPhone = phone.trim();
+
+    if (accountType === "OWNER" && !trimmedPhone) {
+      setError("Property owners must enter a phone number.");
+      return;
+    }
+
+    if (
+      trimmedPhone &&
+      !/^(0\d{9}|\+94\d{9})$/.test(trimmedPhone.replace(/[\s()-]/g, ""))
+    ) {
+      setError(
+        "Please enter a valid Sri Lankan phone number, like 0771234567 or +94771234567."
+      );
+      return;
+    }
+
     if (!password) {
       setError("Please enter a password.");
       return;
@@ -54,7 +78,7 @@ function Register() {
 
     try {
       const response = await fetch(
-        "http://localhost:8080/api/auth/register",
+        `${API_BASE_URL}/api/auth/register`,
         {
           method: "POST",
           headers: {
@@ -64,6 +88,8 @@ function Register() {
             name: trimmedName,
             email: trimmedEmail,
             password,
+            role: accountType,
+            phone: trimmedPhone,
           }),
         }
       );
@@ -114,41 +140,7 @@ function Register() {
   };
 
   return (
-    <div className="min-h-screen bg-[var(--color-background)]">
-
-      {/* Top bar */}
-      <header className="border-b border-[var(--color-border)] bg-[var(--color-surface)]">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 lg:px-8">
-
-          <button
-            type="button"
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2 text-sm font-medium text-[var(--color-text-secondary)] transition hover:text-[var(--color-navy)]"
-          >
-            <ArrowLeft size={17} />
-            Back
-          </button>
-
-          <div className="flex items-center gap-2">
-            <MapPin
-              size={20}
-              strokeWidth={2}
-              className="text-[var(--color-coral)]"
-            />
-
-            <span className="text-xl font-bold tracking-tight text-[var(--color-navy)]">
-              StayBy
-            </span>
-          </div>
-
-          <div className="w-14" />
-        </div>
-      </header>
-
-      {/* Register */}
-      <main className="flex min-h-[calc(100vh-81px)] items-center justify-center px-6 py-12">
-
-        <div className="w-full max-w-md">
+    <AuthShell backTo="/">
 
           {/* Heading */}
           <div className="text-center">
@@ -161,7 +153,9 @@ function Register() {
             </h1>
 
             <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-              Create an account to discover and manage your stays.
+              {accountType === "OWNER"
+                ? "List your property and reach guests who need a stay near their destination."
+                : "Create an account to discover and book stays."}
             </p>
           </div>
 
@@ -176,6 +170,44 @@ function Register() {
                   {error}
                 </div>
               )}
+
+              {/* Account type */}
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-text)]">
+                  I want to
+                </p>
+
+                <div className="mt-2 grid grid-cols-2 gap-2 rounded-xl bg-[var(--color-background)] p-1">
+                  {(
+                    [
+                      ["TRAVELER", "Find a stay"],
+                      ["OWNER", "List my property"],
+                    ] as const
+                  ).map(([value, label]) => (
+                    <button
+                      key={value}
+                      type="button"
+                      disabled={loading}
+                      onClick={() => setAccountType(value)}
+                      aria-pressed={accountType === value}
+                      className={`rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
+                        accountType === value
+                          ? "bg-[var(--color-coral)] text-white shadow-sm"
+                          : "text-[var(--color-text-secondary)] hover:text-[var(--color-navy)]"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+
+                {accountType === "OWNER" && (
+                  <p className="mt-2 text-xs leading-5 text-[var(--color-text-secondary)]">
+                    Your properties appear to guests after our team
+                    verifies them.
+                  </p>
+                )}
+              </div>
 
               {/* Name */}
               <div>
@@ -215,6 +247,33 @@ function Register() {
                   placeholder="you@example.com"
                   disabled={loading}
                   autoComplete="email"
+                  className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 text-sm text-[var(--color-text)] outline-none transition placeholder:text-gray-400 focus:border-[var(--color-coral)] focus:ring-2 focus:ring-[var(--color-coral-light)] disabled:cursor-not-allowed disabled:opacity-60"
+                />
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label
+                  htmlFor="register-phone"
+                  className="text-sm font-semibold text-[var(--color-text)]"
+                >
+                  Phone number
+                  {accountType === "TRAVELER" && (
+                    <span className="font-normal text-[var(--color-text-secondary)]">
+                      {" "}
+                      (optional)
+                    </span>
+                  )}
+                </label>
+
+                <input
+                  id="register-phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(event) => setPhone(event.target.value)}
+                  placeholder="0771234567"
+                  disabled={loading}
+                  autoComplete="tel"
                   className="mt-2 w-full rounded-xl border border-[var(--color-border)] bg-[var(--color-background)] px-4 py-3 text-sm text-[var(--color-text)] outline-none transition placeholder:text-gray-400 focus:border-[var(--color-coral)] focus:ring-2 focus:ring-[var(--color-coral-light)] disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
@@ -334,10 +393,7 @@ function Register() {
 
           </div>
 
-        </div>
-
-      </main>
-    </div>
+    </AuthShell>
   );
 }
 

@@ -1,3 +1,4 @@
+import { showConfirm } from "../services/dialog";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -28,8 +29,9 @@ import {
   type RoomImageResponse,
   type RoomResponse,
 } from "../services/ownerRoomService";
+import ErrorPopup from "../components/ErrorPopup";
 
-const API_BASE_URL = "http://localhost:8080";
+import { API_BASE_URL } from "../config";
 
 const EMPTY_FORM: CreateRoomRequest = {
   name: "",
@@ -282,7 +284,7 @@ function OwnerRooms() {
   const handleDeleteRoom = async (
     roomId: number
   ) => {
-    const confirmed = window.confirm(
+    const confirmed = await showConfirm(
       "Are you sure you want to delete this room?"
     );
 
@@ -386,7 +388,7 @@ function OwnerRooms() {
     roomId: number,
     imageId: number
   ) => {
-    const confirmed = window.confirm(
+    const confirmed = await showConfirm(
       "Are you sure you want to remove this image?"
     );
 
@@ -533,11 +535,7 @@ function OwnerRooms() {
         {/* =====================================================
             ERROR
         ===================================================== */}
-        {error && (
-          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
-            {error}
-          </div>
-        )}
+        <ErrorPopup message={error} onClose={() => setError("")} />
 
         {/* =====================================================
             ADD / EDIT ROOM FORM
@@ -943,7 +941,7 @@ function OwnerRooms() {
                             room.id
                           )
                         }
-                        className="flex items-center justify-center gap-2 rounded-xl border border-red-200 px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
+                        className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-red-200 px-4 py-3 text-sm font-semibold text-red-600 transition hover:bg-red-50"
                       >
                         <Trash2 size={16} />
                         Delete room

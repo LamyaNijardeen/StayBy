@@ -1,5 +1,5 @@
+import Logo from "./Logo";
 import {
-  Building2,
   LogIn,
   Menu,
   X,
@@ -24,74 +24,57 @@ function Navbar() {
               LOGO
           ===================================================== */}
 
-          <Link
-            to="/"
-            onClick={closeMenu}
-            className="group flex items-center gap-2"
-          >
-            <Building2
-              size={23}
-              strokeWidth={2}
-              className="text-[var(--color-coral)] transition-transform duration-200 group-hover:scale-105"
-            />
-
-            <span className="text-2xl font-bold tracking-tight text-[var(--color-navy)]">
-              Stay
-              <span className="text-[var(--color-coral)]">
-                By
-              </span>
-            </span>
-          </Link>
+          <Logo to="/" onClick={closeMenu} />
 
           {/* =====================================================
               DESKTOP NAVIGATION
           ===================================================== */}
 
-          <div className="hidden items-center gap-1 lg:flex">
+          <div className="hidden items-center gap-0.5 whitespace-nowrap lg:flex xl:gap-1">
 
             <a
               href="#explore"
-              className="group relative rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
+              className="group relative rounded-lg px-3 py-2.5 text-sm font-semibold xl:px-4 text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
             >
               Explore
 
-              <span className="absolute bottom-1 left-4 right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
+              <span className="absolute bottom-1 left-3 right-3 xl:left-4 xl:right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
             </a>
 
             <a
               href="#featured"
-              className="group relative rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
+              className="group relative rounded-lg px-3 py-2.5 text-sm font-semibold xl:px-4 text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
             >
               Featured
 
-              <span className="absolute bottom-1 left-4 right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
+              <span className="absolute bottom-1 left-3 right-3 xl:left-4 xl:right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
             </a>
 
             <a
               href="#why-stayby"
-              className="group relative rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
+              className="group relative rounded-lg px-3 py-2.5 text-sm font-semibold xl:px-4 text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
             >
               Why StayBy?
 
-              <span className="absolute bottom-1 left-4 right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
+              <span className="absolute bottom-1 left-3 right-3 xl:left-4 xl:right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
             </a>
 
             <a
               href="#how-it-works"
-              className="group relative rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
+              className="group relative rounded-lg px-3 py-2.5 text-sm font-semibold xl:px-4 text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
             >
               How It Works
 
-              <span className="absolute bottom-1 left-4 right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
+              <span className="absolute bottom-1 left-3 right-3 xl:left-4 xl:right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
             </a>
 
             <a
               href="#impact"
-              className="group relative rounded-lg px-4 py-2.5 text-sm font-semibold text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
+              className="group relative rounded-lg px-3 py-2.5 text-sm font-semibold xl:px-4 text-[var(--color-text-secondary)] transition-all duration-200 hover:bg-[var(--color-background)] hover:text-[var(--color-navy)]"
             >
               Our Purpose
 
-              <span className="absolute bottom-1 left-4 right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
+              <span className="absolute bottom-1 left-3 right-3 xl:left-4 xl:right-4 h-0.5 origin-center scale-x-0 rounded-full bg-[var(--color-navy)] transition-transform duration-200 group-hover:scale-x-100" />
             </a>
 
           </div>
@@ -100,7 +83,7 @@ function Navbar() {
               DESKTOP ACTIONS
           ===================================================== */}
 
-          <div className="hidden items-center gap-3 lg:flex">
+          <div className="hidden shrink-0 items-center gap-2 whitespace-nowrap lg:flex xl:gap-3">
             <Link
               to="/login"
               className="flex items-center gap-2 rounded-xl border-2 border-[var(--color-coral)] px-4 py-2.5 text-sm font-semibold text-[var(--color-coral)] transition-all duration-200 hover:bg-[var(--color-navy)] hover:border-[var(--color-navy)] hover:text-white"

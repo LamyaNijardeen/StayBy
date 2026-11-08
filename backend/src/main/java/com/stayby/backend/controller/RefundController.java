@@ -7,6 +7,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @RestController
@@ -351,38 +352,62 @@ public ResponseEntity<?> getTravelerRefund(
             Refund refund
     ) {
 
-        return Map.of(
-                "id",
-                refund.getId(),
+        // HashMap (not Map.of) because some values can be null
+        Map<String, Object> response = new HashMap<>();
 
-                "bookingId",
-                refund.getBooking().getId(),
+        response.put("id", refund.getId());
+        response.put("bookingId", refund.getBooking().getId());
+        response.put("paymentId", refund.getPayment().getId());
+        response.put("amount", refund.getAmount());
+        response.put("status", refund.getStatus());
 
-                "paymentId",
-                refund.getPayment().getId(),
-
-                "amount",
-                refund.getAmount(),
-
-                "status",
-                refund.getStatus(),
-
+        response.put(
                 "reason",
-                refund.getReason(),
+                refund.getReason() == null
+                        ? ""
+                        : refund.getReason()
+        );
 
+        response.put(
                 "refundReference",
                 refund.getRefundReference() == null
                         ? ""
-                        : refund.getRefundReference(),
+                        : refund.getRefundReference()
+        );
 
+        response.put(
                 "processedAt",
                 refund.getProcessedAt() == null
                         ? ""
-                        : refund.getProcessedAt(),
-
-                "createdAt",
-                refund.getCreatedAt()
+                        : refund.getProcessedAt()
         );
+
+        response.put("createdAt", refund.getCreatedAt());
+
+        // BANK_TRANSFER or PAYHERE
+        response.put(
+                "paymentMethod",
+                refund.getPayment().getPaymentMethod() == null
+                        ? ""
+                        : refund.getPayment().getPaymentMethod()
+        );
+
+        // So the owner knows who to refund
+        response.put(
+                "travelerName",
+                refund.getBooking().getUser() == null
+                        ? ""
+                        : refund.getBooking().getUser().getName()
+        );
+
+        response.put(
+                "travelerEmail",
+                refund.getBooking().getUser() == null
+                        ? ""
+                        : refund.getBooking().getUser().getEmail()
+        );
+
+        return response;
     }
 
     // =========================================================

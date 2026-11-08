@@ -17,6 +17,10 @@ public class PropertySearchResponse {
     private PropertyOwnerResponse owner;
     private List<RoomResponse> availableRooms;
     private Set<String> suitablePurposes;
+    private Set<String> amenities;
+    private List<LandmarkResponse> nearbyLandmarks;
+    private LandmarkResponse matchedLandmark;
+    private boolean relevant;
 
     public PropertySearchResponse() {
     }
@@ -33,7 +37,8 @@ public class PropertySearchResponse {
             boolean verified,
             PropertyOwnerResponse owner,
             List<RoomResponse> availableRooms,
-            Set<String> suitablePurposes
+            Set<String> suitablePurposes,
+            Set<String> amenities
     ) {
         this.id = id;
         this.name = name;
@@ -47,6 +52,7 @@ public class PropertySearchResponse {
         this.owner = owner;
         this.availableRooms = availableRooms;
         this.suitablePurposes = suitablePurposes;
+        this.amenities = amenities;
     }
 
     public Long getId() {
@@ -95,5 +101,34 @@ public class PropertySearchResponse {
 
     public Set<String> getSuitablePurposes() {
         return suitablePurposes;
+    }
+
+    public Set<String> getAmenities() {
+        return amenities;
+    }
+
+    public List<LandmarkResponse> getNearbyLandmarks() {
+        return nearbyLandmarks;
+    }
+
+    public void setNearbyLandmarks(List<LandmarkResponse> nearbyLandmarks) {
+        this.nearbyLandmarks = nearbyLandmarks;
+    }
+
+    public LandmarkResponse getMatchedLandmark() {
+        return matchedLandmark;
+    }
+
+    public void setMatchedLandmark(LandmarkResponse matchedLandmark) {
+        this.matchedLandmark = matchedLandmark;
+    }
+
+    /** true when the stay satisfies everything the traveler typed. */
+    public boolean isRelevant() {
+        return relevant;
+    }
+
+    public void setRelevant(boolean relevant) {
+        this.relevant = relevant;
     }
 }

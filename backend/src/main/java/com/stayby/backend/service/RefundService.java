@@ -22,18 +22,21 @@ public class RefundService {
         private final BookingRepository bookingRepository;
         private final EmailService emailService;
         private final RefundSlipService refundSlipService;
+        private final PayHereRefundService payHereRefundService;
 
         public RefundService(
                         RefundRepository refundRepository,
                         PaymentRepository paymentRepository,
                         BookingRepository bookingRepository,
                         EmailService emailService,
-                        RefundSlipService refundSlipService) {
+                        RefundSlipService refundSlipService,
+                        PayHereRefundService payHereRefundService) {
                 this.refundRepository = refundRepository;
                 this.paymentRepository = paymentRepository;
                 this.bookingRepository = bookingRepository;
                 this.emailService = emailService;
                 this.refundSlipService = refundSlipService;
+                this.payHereRefundService = payHereRefundService;
         }
 
         // =========================================================
@@ -172,18 +175,68 @@ public class RefundService {
                                         "Only pending refunds can be completed");
                 }
 
-                if (refundReference == null
-                                || refundReference.trim().isEmpty()) {
+                Payment refundPayment = refund.getPayment();
 
-                        throw new IllegalArgumentException(
-                                        "Refund reference is required");
-                }
+                boolean isCardPayment = refundPayment != null
+                                && "PAYHERE".equalsIgnoreCase(
+                                                refundPayment.getPaymentMethod());
 
-                String cleanedReference = refundReference.trim();
+                boolean noReference = refundReference == null
+                                || refundReference.trim().isEmpty();
 
-                if (cleanedReference.length() > 100) {
-                        throw new IllegalArgumentException(
-                                        "Refund reference cannot exceed 100 characters");
+                String cleanedReference;
+
+                if (isCardPayment && noReference) {
+
+                        // -------------------------------------------------
+                        // CARD PAYMENT: refund automatically through PayHere
+                        // -------------------------------------------------
+
+                        if (!payHereRefundService.isConfigured()) {
+                                throw new IllegalArgumentException(
+                                                "Automatic card refunds are not set up. "
+                                                                + "Refund this payment in your PayHere "
+                                                                + "dashboard, then enter its reference here.");
+                        }
+
+                        String payherePaymentId = refundPayment.getPaymentId();
+
+                        if (payherePaymentId == null
+                                        || payherePaymentId.isBlank()) {
+                                throw new IllegalArgumentException(
+                                                "This card payment has no PayHere payment number, "
+                                                                + "so it cannot be refunded automatically. "
+                                                                + "Refund it in your PayHere dashboard, "
+                                                                + "then enter its reference here.");
+                        }
+
+                        String payhereRefundNumber = payHereRefundService
+                                        .refundPayment(
+                                                        payherePaymentId,
+                                                        "StayBy booking #"
+                                                                        + booking.getId()
+                                                                        + " refund");
+
+                        cleanedReference = "PAYHERE-" + payhereRefundNumber;
+
+                } else {
+
+                        // -------------------------------------------------
+                        // BANK TRANSFER (or card refunded by hand):
+                        // the owner enters the reference
+                        // -------------------------------------------------
+
+                        if (noReference) {
+                                throw new IllegalArgumentException(
+                                                "Refund reference is required");
+                        }
+
+                        cleanedReference = refundReference.trim();
+
+                        if (cleanedReference.length() > 100) {
+                                throw new IllegalArgumentException(
+                                                "Refund reference cannot exceed 100 characters");
+                        }
                 }
 
                 // =====================================================

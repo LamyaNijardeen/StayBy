@@ -3,10 +3,15 @@ import {
   Search,
   Sparkles,
 } from "lucide-react";
+import Reveal from "./Reveal";
+import SectionDecor from "./SectionDecor";
 
 const steps = [
   {
     number: "01",
+    grad: "from-[#E76F51] to-[#F4A261]",
+    glow: "bg-[#E76F51]",
+    text: "from-[#E76F51] to-[#F4A261]",
     icon: Search,
     title: "Search",
     description:
@@ -14,6 +19,9 @@ const steps = [
   },
   {
     number: "02",
+    grad: "from-[#F4A261] to-[#E9C46A]",
+    glow: "bg-[#F4A261]",
+    text: "from-[#E08A3C] to-[#E9C46A]",
     icon: Sparkles,
     title: "Choose",
     description:
@@ -21,6 +29,9 @@ const steps = [
   },
   {
     number: "03",
+    grad: "from-[#2A9D8F] to-[#6CC6BA]",
+    glow: "bg-[#2A9D8F]",
+    text: "from-[#2A9D8F] to-[#4DB6A9]",
     icon: CalendarCheck,
     title: "Stay",
     description:
@@ -30,13 +41,16 @@ const steps = [
 
 function HowItWorks() {
   return (
-    <section 
-    id="how-it-works"
-    className="bg-[var(--color-background)]">
-      <div className="mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24">
+    <section
+      id="how-it-works"
+      className="relative overflow-hidden bg-gradient-to-b from-[#FAF9F6] via-[#FFF1E8] to-[#FAF9F6]"
+    >
+      <SectionDecor tone="sunny" />
+
+      <div className="relative mx-auto max-w-7xl px-6 py-20 lg:px-8 lg:py-24">
 
         {/* Heading */}
-        <div className="mx-auto max-w-2xl text-center">
+        <Reveal className="mx-auto max-w-2xl text-center">
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-coral)]">
             How it works
           </p>
@@ -49,10 +63,13 @@ function HowItWorks() {
             From your first search to your final booking, StayBy keeps
             the experience straightforward.
           </p>
-        </div>
+        </Reveal>
 
         {/* Steps */}
-        <div className="relative mt-14 grid gap-8 md:grid-cols-3">
+        <Reveal
+          stagger
+          className="relative mt-14 grid gap-8 md:grid-cols-3"
+        >
 
           {steps.map((step, index) => {
             const Icon = step.icon;
@@ -60,20 +77,28 @@ function HowItWorks() {
             return (
               <div
                 key={step.number}
-                className="relative text-center"
+                className="relative rounded-3xl border border-white/70 bg-white/70 px-6 py-8 text-center shadow-sm backdrop-blur-sm transition duration-300 hover:-translate-y-1.5 hover:shadow-xl"
               >
                 {/* Connector */}
                 {index < steps.length - 1 && (
-                  <div className="absolute left-[calc(50%+48px)] right-[calc(-50%+48px)] top-6 hidden border-t border-dashed border-[var(--color-border)] md:block" />
+                  <div className="dash-flow absolute left-[calc(100%-8px)] w-[calc(2rem+16px)] top-14 hidden md:block" />
                 )}
 
                 {/* Icon */}
-                <div className="relative mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-[var(--color-coral)] text-white shadow-sm">
-                  <Icon size={21} strokeWidth={1.8} />
+                <div className="relative mx-auto flex h-12 w-12 items-center justify-center">
+                  <span
+                    aria-hidden="true"
+                    className={`pulse-ring absolute inset-0 rounded-full ${step.glow}`}
+                    style={{ animationDelay: `${index * 0.8}s` }}
+                  />
+
+                  <span className={`relative flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br ${step.grad} text-white shadow-md`}>
+                    <Icon size={21} strokeWidth={1.8} />
+                  </span>
                 </div>
 
                 {/* Number */}
-                <p className="mt-5 text-xs font-semibold tracking-[0.18em] text-[var(--color-coral)]">
+                <p className={`mt-5 bg-gradient-to-r ${step.text} bg-clip-text text-2xl font-extrabold tracking-[0.12em] text-transparent`}>
                   {step.number}
                 </p>
 
@@ -90,7 +115,7 @@ function HowItWorks() {
             );
           })}
 
-        </div>
+        </Reveal>
       </div>
     </section>
   );

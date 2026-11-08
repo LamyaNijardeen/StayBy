@@ -17,6 +17,7 @@ import {
   getMyBookings,
   type BookingResponse,
 } from "../services/bookingService";
+import ErrorPopup from "../components/ErrorPopup";
 
 const SUBJECT_OPTIONS = [
   "Property issue",
@@ -184,30 +185,22 @@ export default function Complaints() {
     <div className="min-h-screen bg-[#FAF9F6]">
       <TravelerNavbar />
 
-      <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-5xl px-6 py-10 lg:px-8">
         <div className="mb-8">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#FCE9E4]">
-              <FileWarning className="h-5 w-5 text-[#E76F51]" />
-            </div>
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[var(--color-coral)]">
+            Support
+          </p>
 
-            <div>
-              <h1 className="text-2xl font-bold text-[#172B4D]">
-                Complaints & Reports
-              </h1>
+          <h1 className="mt-2 text-3xl font-bold tracking-tight text-[var(--color-navy)] sm:text-4xl">
+            Complaints &amp; Reports
+          </h1>
 
-              <p className="text-sm text-gray-500">
-                Report an issue related to your StayBy booking.
-              </p>
-            </div>
-          </div>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-[var(--color-text-secondary)]">
+            Report an issue related to your StayBy booking.
+          </p>
         </div>
 
-        {error && (
-          <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-            {error}
-          </div>
-        )}
+        <ErrorPopup message={error} onClose={() => setError("")} />
 
         {success && (
           <div className="mb-6 rounded-xl border border-green-200 bg-green-50 p-4 text-sm text-green-700">
